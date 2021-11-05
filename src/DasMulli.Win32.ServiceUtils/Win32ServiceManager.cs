@@ -68,6 +68,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <param name="startImmediately">If set to <see langword="true"/>, the service will be started immediately after registering.</param>
         /// <exception cref="ArgumentException">
         /// Thrown when <see cref="ServiceDefinition.BinaryPath"/> is null or empty or <see cref="ServiceDefinition.ServiceName"/> is null or empty.
+        /// </exception>
         /// <exception cref="PlatformNotSupportedException">Thrown when run on a non-Windows platform.</exception>
         public void CreateService(ServiceDefinition serviceDefinition, bool startImmediately = false)
         {

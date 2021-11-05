@@ -1,16 +1,17 @@
-﻿using System;
-using DasMulli.Win32.ServiceUtils;
+﻿using DasMulli.Win32.ServiceUtils;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using Microsoft.Extensions.Hosting;
 
 namespace TestService
 {
     internal class TestWin32Service : IWin32Service
     {
         private readonly string[] commandLineArguments;
-        private IWebHost webHost;
         private bool stopRequestedByWindows;
+        private IWebHost webHost;
 
         public TestWin32Service(string[] commandLineArguments)
         {
@@ -36,7 +37,7 @@ namespace TestService
                 combinedArguments = commandLineArguments;
             }
 
-            var config = new ConfigurationBuilder()
+            IConfigurationRoot config = new ConfigurationBuilder()
                 .AddCommandLine(combinedArguments)
                 .Build();
 
@@ -50,11 +51,11 @@ namespace TestService
             // ASP.NET Core stack stops for any reason
             webHost
                 .Services
-                .GetRequiredService<IApplicationLifetime>()
+                .GetRequiredService<IHostApplicationLifetime>()
                 .ApplicationStopped
                 .Register(() =>
                 {
-                    if (stopRequestedByWindows == false)
+                    if (!stopRequestedByWindows)
                     {
                         serviceStoppedCallback();
                     }

@@ -1,7 +1,7 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using FakeItEasy;
+﻿using FakeItEasy;
 using FluentAssertions;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using Xunit;
 
 namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
@@ -15,7 +15,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         {
             Action ctor = () => new ServiceUtils.Win32ServiceHost(service: null);
 
-            ctor.ShouldThrow<ArgumentException>().Which.ParamName.Should().Be("service");
+            ctor.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("service");
         }
 
         [Fact]
@@ -23,7 +23,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         {
             Action ctor = () => new ServiceUtils.Win32ServiceHost(serviceName: null, stateMachine: A.Fake<IWin32ServiceStateMachine>());
 
-            ctor.ShouldThrow<ArgumentException>().Which.ParamName.Should().Be("serviceName");
+            ctor.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("serviceName");
         }
 
         [Fact]
@@ -31,7 +31,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         {
             Action ctor = () => new ServiceUtils.Win32ServiceHost("Test Service", stateMachine: null);
 
-            ctor.ShouldThrow<ArgumentException>().Which.ParamName.Should().Be("stateMachine");
+            ctor.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("stateMachine");
         }
     }
 }

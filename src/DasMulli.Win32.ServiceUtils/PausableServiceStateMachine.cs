@@ -23,6 +23,33 @@ namespace DasMulli.Win32.ServiceUtils
         }
 
         /// <summary>
+        /// Called by the service host when a command was received from Windows' service system.
+        /// </summary>
+        /// <param name="command">The received command.</param>
+        /// <param name="commandSpecificEventType">Type of the command specific event.
+        /// See description of dwEventType at https://msdn.microsoft.com/en-us/library/windows/desktop/ms683241(v=vs.85).aspx
+        /// </param>
+        public void OnCommand(ServiceControlCommand command, uint commandSpecificEventType)
+        {
+            switch (command)
+            {
+                case ServiceControlCommand.Stop:
+                    PerformAction(ServiceState.StopPending, ServiceState.Stopped, serviceImplementation.Stop, ServiceAcceptedControlCommandsFlags.None);
+                    break;
+
+                case ServiceControlCommand.Pause:
+                    PerformAction(ServiceState.PausePending, ServiceState.Paused, serviceImplementation.Pause,
+                        ServiceAcceptedControlCommandsFlags.PauseContinueStop);
+                    break;
+
+                case ServiceControlCommand.Continue:
+                    PerformAction(ServiceState.ContinuePending, ServiceState.Running, serviceImplementation.Continue,
+                        ServiceAcceptedControlCommandsFlags.PauseContinueStop);
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Called by the service host to start the service. When called by <see cref="Win32ServiceHost"/>,
         /// the service startup arguments received from Windows are specified.
         /// Use the provided <see cref="ServiceStatusReportCallback"/> to notify the service manager about
@@ -47,31 +74,13 @@ namespace DasMulli.Win32.ServiceUtils
             }
         }
 
-        /// <summary>
-        /// Called by the service host to start the service. When called by <see cref="Win32ServiceHost"/>,
-        /// the service startup arguments received from Windows are specified.
-        /// Use the provided <see cref="ServiceStatusReportCallback"/> to notify the service manager about
-        /// state changes such as started, paused etc.
-        /// </summary>
-        /// <param name="startupArguments">The startup arguments.</param>
-        /// <param name="statusReportCallback">Notifies the service manager of a status change.</param>
-        public void OnCommand(ServiceControlCommand command, uint commandSpecificEventType)
+        private void HandleServiceImplementationStoppedOnItsOwn()
         {
-            switch (command)
-            {
-                case ServiceControlCommand.Stop:
-                    PerformAction(ServiceState.StopPending, ServiceState.Stopped, serviceImplementation.Stop, ServiceAcceptedControlCommandsFlags.None);
-                    break;
-                case ServiceControlCommand.Pause:
-                    PerformAction(ServiceState.PausePending, ServiceState.Paused, serviceImplementation.Pause, ServiceAcceptedControlCommandsFlags.PauseContinueStop);
-                    break;
-                case ServiceControlCommand.Continue:
-                    PerformAction(ServiceState.ContinuePending, ServiceState.Running, serviceImplementation.Continue, ServiceAcceptedControlCommandsFlags.PauseContinueStop);
-                    break;
-            }
+            statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
         }
 
-        private void PerformAction(ServiceState pendingState, ServiceState completedState, Action serviceAction, ServiceAcceptedControlCommandsFlags allowedControlCommandsFlags)
+        private void PerformAction(ServiceState pendingState, ServiceState completedState, Action serviceAction,
+            ServiceAcceptedControlCommandsFlags allowedControlCommandsFlags)
         {
             statusReportCallback(pendingState, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 3000);
 
@@ -84,11 +93,6 @@ namespace DasMulli.Win32.ServiceUtils
             {
                 statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, waitHint: 0);
             }
-        }
-
-        private void HandleServiceImplementationStoppedOnItsOwn()
-        {
-            statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
         }
     }
 }

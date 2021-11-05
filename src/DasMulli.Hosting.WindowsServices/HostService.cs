@@ -1,31 +1,28 @@
-﻿using System.Reflection;
-using DasMulli.Win32.ServiceUtils;
+﻿using DasMulli.Win32.ServiceUtils;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Reflection;
 
-namespace DasMulli.AspNetCore.Hosting.WindowsServices
+namespace DasMulli.Hosting.WindowsServices
 {
     /// <inheritdoc />
     /// <summary>
     /// Provides an implementation of a service that hosts an ASP.NET Core application.
     /// </summary>
-    /// <seealso cref="T:DasMulli.Win32.ServiceUtils.IWin32Service" />
+    /// <seealso cref="DasMulli.Win32.ServiceUtils.IWin32Service" />
     [PublicAPI]
-    public class WebHostService : IWin32Service
+    public class HostService : IWin32Service
     {
-        private readonly IWebHost host;
+        private readonly IHost host;
         private bool stopRequestedByWindows;
 
-        /// <inheritdoc />
-        public string ServiceName { get; }
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="WebHostService"/> class which hosts the specified host as a Windows service.
+        /// Initializes a new instance of the <see cref="HostService"/> class which hosts the specified host as a Windows service.
         /// </summary>
         /// <param name="host">The host to run as a service.</param>
         /// <param name="serviceName">The name of the service to run. If <see langword="null"/>, the name of the entry assembly is used.</param>
-        public WebHostService(IWebHost host, string serviceName = null)
+        public HostService(IHost host, string serviceName = null)
         {
             if (serviceName == null)
             {
@@ -37,15 +34,18 @@ namespace DasMulli.AspNetCore.Hosting.WindowsServices
         }
 
         /// <inheritdoc />
+        public string ServiceName { get; }
+
+        /// <inheritdoc />
         public void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback)
         {
             host
                 .Services
-                .GetRequiredService<IApplicationLifetime>()
+                .GetRequiredService<IHostApplicationLifetime>()
                 .ApplicationStopped
                 .Register(() =>
                 {
-                    if (stopRequestedByWindows == false)
+                    if (!stopRequestedByWindows)
                     {
                         serviceStoppedCallback();
                     }
