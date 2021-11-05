@@ -1,5 +1,3 @@
-﻿using FakeItEasy;
-using FluentAssertions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,6 +5,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using FakeItEasy;
+using FluentAssertions;
 using Xunit;
 
 namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
@@ -16,45 +16,42 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         private const string TestServiceName = "UnitTestService";
         private static readonly string[] TestServiceStartupArguments = { "Arg1", "Arg2" };
 
-        private readonly INativeInterop nativeInterop = A.Fake<INativeInterop>();
-        private readonly List<ServiceStatus> reportedServiceStatuses = new List<ServiceStatus>();
-        private readonly IWin32ServiceStateMachine serviceStateMachine = A.Fake<IWin32ServiceStateMachine>();
-        private readonly ServiceStatusHandle serviceStatusHandle = A.Fake<ServiceStatusHandle>();
-        private readonly ServiceUtils.Win32ServiceHost sut;
-        private readonly EventWaitHandle backroundRunCompletedEvent = new EventWaitHandle(false, EventResetMode.ManualReset);
-        private bool doNotBlockAfterServiceMainFunction;
-        private IntPtr serviceControlContext;
-        private ServiceControlHandler serviceControlHandler;
-        private readonly EventWaitHandle serviceMainFunctionExitedEvent = new EventWaitHandle(false, EventResetMode.ManualReset);
-        private readonly EventWaitHandle serviceStoppedEvent = new EventWaitHandle(false, EventResetMode.ManualReset);
-        private ServiceStatusReportCallback statusReportCallback;
+        private readonly EventWaitHandle _backgroundRunCompletedEvent = new(false, EventResetMode.ManualReset);
+        private readonly INativeInterop _nativeInterop = A.Fake<INativeInterop>();
+        private readonly List<ServiceStatus> _reportedServiceStatuses = new();
+        private readonly EventWaitHandle _serviceMainFunctionExitedEvent = new(false, EventResetMode.ManualReset);
+        private readonly IWin32ServiceStateMachine _serviceStateMachine = A.Fake<IWin32ServiceStateMachine>();
+        private readonly ServiceStatusHandle _serviceStatusHandle = A.Fake<ServiceStatusHandle>();
+        private readonly EventWaitHandle _serviceStoppedEvent = new(false, EventResetMode.ManualReset);
+        private readonly ServiceUtils.Win32ServiceHost _sut;
+        private bool _doNotBlockAfterServiceMainFunction;
+        private IntPtr _serviceControlContext;
+        private ServiceControlHandler _serviceControlHandler;
+        private ServiceStatusReportCallback _statusReportCallback;
 
         public ServiceLifecycleTests()
         {
-            A.CallTo(() => serviceStateMachine.OnStart(A<string[]>._, A<ServiceStatusReportCallback>._))
-                .Invokes((string[] args, ServiceStatusReportCallback callback) =>
-                {
-                    statusReportCallback = callback;
-                });
+            A.CallTo(() => _serviceStateMachine.OnStart(A<string[]>._, A<ServiceStatusReportCallback>._))
+                .Invokes((string[] _, ServiceStatusReportCallback callback) => _statusReportCallback = callback);
 
-            ServiceStatus dummy = new ServiceStatus();
-            A.CallTo(() => nativeInterop.SetServiceStatus(null, ref dummy))
+            var dummy = new ServiceStatus();
+            A.CallTo(() => _nativeInterop.SetServiceStatus(null, ref dummy))
                 .WithAnyArguments()
                 .Returns(value: true)
                 .AssignsOutAndRefParametersLazily((ServiceStatusHandle handle, ServiceStatus status) =>
                 {
-                    if (handle == serviceStatusHandle)
+                    if (handle == _serviceStatusHandle)
                     {
-                        reportedServiceStatuses.Add(status);
+                        _reportedServiceStatuses.Add(status);
                         if (status.State == ServiceState.Stopped)
                         {
-                            serviceStoppedEvent.Set();
+                            _serviceStoppedEvent.Set();
                         }
                     }
                     return new object[] { status };
                 });
 
-            sut = new ServiceUtils.Win32ServiceHost(TestServiceName, serviceStateMachine, nativeInterop);
+            _sut = new ServiceUtils.Win32ServiceHost(TestServiceName, _serviceStateMachine, _nativeInterop);
         }
 
         [Fact]
@@ -64,42 +61,42 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             GivenServiceControlManagerIsExpectingService();
 
             // When
-            doNotBlockAfterServiceMainFunction = true;
-            sut.Run();
+            _doNotBlockAfterServiceMainFunction = true;
+            _sut.Run();
 
             // Then
-            A.CallTo(() => serviceStateMachine.OnStart(A<string[]>.That.IsSameSequenceAs(TestServiceStartupArguments), A<ServiceStatusReportCallback>.Ignored))
+            A.CallTo(() => _serviceStateMachine.OnStart(A<string[]>.That.IsSameSequenceAs(TestServiceStartupArguments), A<ServiceStatusReportCallback>.Ignored))
                 .MustHaveHappenedOnceExactly();
-            reportedServiceStatuses.Should().Contain(status => status.State == ServiceState.StartPending && status.AcceptedControlCommands == ServiceAcceptedControlCommandsFlags.None);
+            _reportedServiceStatuses.Should().Contain(status => status.State == ServiceState.StartPending && status.AcceptedControlCommands == ServiceAcceptedControlCommandsFlags.None);
         }
 
         [Fact]
-        public void ItCanStopServicesWhenRequestedByOS()
+        public void ItCanStopServicesWhenRequestedByOs()
         {
             // Given
-            doNotBlockAfterServiceMainFunction = true;
+            _doNotBlockAfterServiceMainFunction = true;
             GivenTheServiceHasBeenStarted();
 
             // When
-            WhenTheOSSendsControlCommand(ServiceControlCommand.Stop, commandSpecificEventType: 0);
+            WhenTheOsSendsControlCommand(ServiceControlCommand.Stop, commandSpecificEventType: 0);
 
             // Then
-            A.CallTo(() => serviceStateMachine.OnCommand(ServiceControlCommand.Stop, 0)).MustHaveHappened();
+            A.CallTo(() => _serviceStateMachine.OnCommand(ServiceControlCommand.Stop, 0)).MustHaveHappened();
         }
 
         [Fact]
         public void ItIgnoresStateChangesAfterStopHasBeenReported()
         {
             // Given
-            Task<int> runTask = GivenTheServiceIsShuttingDown();
+            var runTask = GivenTheServiceIsShuttingDown();
 
             // When
-            statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
-            statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
-            backroundRunCompletedEvent.WaitOne(10000);
+            _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
+            _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
+            _backgroundRunCompletedEvent.WaitOne(10000);
 
             // Then
-            reportedServiceStatuses.Last().State.Should().Be(ServiceState.Stopped);
+            _reportedServiceStatuses.Last().State.Should().Be(ServiceState.Stopped);
             runTask.IsCompleted.Should().BeTrue();
         }
 
@@ -107,12 +104,12 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         public void ItResolvesRunAsyncTaskWhenServiceIsStopped()
         {
             // Given
-            Task<int> runTask = GivenTheServiceIsShuttingDown();
+            var runTask = GivenTheServiceIsShuttingDown();
             runTask.IsCompleted.Should().BeFalse();
 
             // When the service implementation reports stopped via callback
-            statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
-            backroundRunCompletedEvent.WaitOne(10000);
+            _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
+            _backgroundRunCompletedEvent.WaitOne(10000);
 
             // Then
             runTask.IsCompleted.Should().BeTrue();
@@ -127,24 +124,24 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             GivenTheStateMachineStartupCodeIsFaulty();
 
             // When
-            int returnValue = sut.Run();
+            var returnValue = _sut.Run();
 
             // Then
             returnValue.Should().Be(expected: -1);
-            reportedServiceStatuses.Should().HaveCount(expected: 2);
-            reportedServiceStatuses[index: 0].State.Should().Be(ServiceState.StartPending);
-            reportedServiceStatuses[index: 1].State.Should().Be(ServiceState.Stopped);
-            reportedServiceStatuses[index: 1].Win32ExitCode.Should().Be(expected: -1);
+            _reportedServiceStatuses.Should().HaveCount(expected: 2);
+            _reportedServiceStatuses[index: 0].State.Should().Be(ServiceState.StartPending);
+            _reportedServiceStatuses[index: 1].State.Should().Be(ServiceState.Stopped);
+            _reportedServiceStatuses[index: 1].Win32ExitCode.Should().Be(expected: -1);
         }
 
         [Fact]
         public void ItThrowsPlatformNotSupportedWhenApiSetDllsAreMissing()
         {
             // Given
-            A.CallTo(nativeInterop).Throws<DllNotFoundException>();
+            A.CallTo(_nativeInterop).Throws<DllNotFoundException>();
 
             // When
-            Action when = () => sut.Run();
+            Action when = () => _sut.Run();
 
             // Then
             when.Should().Throw<PlatformNotSupportedException>();
@@ -157,7 +154,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             GivenRegisteringServiceControlHandlerIsImpossible();
 
             // When
-            Action when = () => sut.Run();
+            Action when = () => _sut.Run();
 
             // Then
             when.Should().Throw<Win32Exception>();
@@ -170,7 +167,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             GivenStartingServiceControlDispatcherIsImpossible();
 
             // When
-            Action when = () => sut.Run();
+            Action when = () => _sut.Run();
 
             // Then
             when.Should().Throw<Win32Exception>();
@@ -178,71 +175,65 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
 
         private void GivenRegisteringServiceControlHandlerIsImpossible()
         {
-            ServiceStatusHandle statusHandle = new ServiceStatusHandle { NativeInterop = nativeInterop };
-            A.CallTo(() => nativeInterop.RegisterServiceCtrlHandlerExW(A<string>._, A<ServiceControlHandler>._, A<IntPtr>._))
+            var statusHandle = new ServiceStatusHandle { NativeInterop = _nativeInterop };
+            A.CallTo(() => _nativeInterop.RegisterServiceCtrlHandlerExW(A<string>._, A<ServiceControlHandler>._, A<IntPtr>._))
                 .Returns(statusHandle);
         }
 
         private void GivenServiceControlManagerIsExpectingService()
         {
-            A.CallTo(() => nativeInterop.StartServiceCtrlDispatcherW(A<ServiceTableEntry[]>._))
+            A.CallTo(() => _nativeInterop.StartServiceCtrlDispatcherW(A<ServiceTableEntry[]>._))
                 .Invokes(new Action<ServiceTableEntry[]>(HandleNativeStartServiceCtrlDispatcherW))
                 .Returns(value: true);
-            A.CallTo(() => nativeInterop.RegisterServiceCtrlHandlerExW(TestServiceName, A<ServiceControlHandler>._, A<IntPtr>._))
+            A.CallTo(() => _nativeInterop.RegisterServiceCtrlHandlerExW(TestServiceName, A<ServiceControlHandler>._, A<IntPtr>._))
                 .ReturnsLazily((string serviceName, ServiceControlHandler controlHandler, IntPtr context) =>
                 {
                     serviceName.Should().Be(TestServiceName);
-                    serviceControlHandler = controlHandler;
-                    serviceControlContext = context;
+                    _serviceControlHandler = controlHandler;
+                    _serviceControlContext = context;
 
-                    return serviceStatusHandle;
+                    return _serviceStatusHandle;
                 });
         }
 
-        private void GivenStartingServiceControlDispatcherIsImpossible()
-        {
-            A.CallTo(() => nativeInterop.StartServiceCtrlDispatcherW(A<ServiceTableEntry[]>._))
+        private void GivenStartingServiceControlDispatcherIsImpossible() => A.CallTo(() => _nativeInterop.StartServiceCtrlDispatcherW(A<ServiceTableEntry[]>._))
                 .Returns(value: false);
-        }
 
         private Task<int> GivenTheServiceHasBeenStarted()
         {
             GivenServiceControlManagerIsExpectingService();
-            Task<int> task = RunInBackground();
-            serviceMainFunctionExitedEvent.WaitOne(10000);
+            var task = RunInBackgroundAsync();
+            _serviceMainFunctionExitedEvent.WaitOne(10000);
             return task;
         }
 
         private Task<int> GivenTheServiceIsShuttingDown()
         {
-            Task<int> task = GivenTheServiceHasBeenStarted();
-            WhenTheOSSendsControlCommand(ServiceControlCommand.Stop, commandSpecificEventType: 0);
+            var task = GivenTheServiceHasBeenStarted();
+            WhenTheOsSendsControlCommand(ServiceControlCommand.Stop, commandSpecificEventType: 0);
             return task;
         }
 
-        private void GivenTheStateMachineStartupCodeIsFaulty()
-        {
-            A.CallTo(() => serviceStateMachine.OnStart(A<string[]>._, A<ServiceStatusReportCallback>._))
+        private void GivenTheStateMachineStartupCodeIsFaulty() => A.CallTo(() => _serviceStateMachine.OnStart(A<string[]>._, A<ServiceStatusReportCallback>._))
                 .Throws<Exception>();
-        }
 
         private void HandleNativeStartServiceCtrlDispatcherW(ServiceTableEntry[] serviceTable)
         {
-            ServiceTableEntry serviceTableEntry = Array.Find(serviceTable, entry => entry.serviceName == TestServiceName);
+            var serviceTableEntry = Array.Find(serviceTable, entry => entry.serviceName == TestServiceName);
             serviceTableEntry.Should().NotBeNull();
 
-            ServiceMainFunction serviceMainFunction = Marshal.GetDelegateForFunctionPointer<ServiceMainFunction>(serviceTableEntry.serviceMainFunction);
+            var serviceMainFunction = Marshal.GetDelegateForFunctionPointer<ServiceMainFunction>(serviceTableEntry.serviceMainFunction);
 
             serviceMainFunction.Should().NotBeNull();
 
-            IntPtr[] memoryBlocks = new IntPtr[TestServiceStartupArguments.Length + 1];
+            var memoryBlocks = new IntPtr[TestServiceStartupArguments.Length + 1];
             memoryBlocks[0] = Marshal.StringToHGlobalUni(TestServiceName);
-            IntPtr pointerBlock = Marshal.AllocHGlobal(IntPtr.Size * memoryBlocks.Length);
+            var pointerBlock = Marshal.AllocHGlobal(IntPtr.Size * memoryBlocks.Length);
             Marshal.WriteIntPtr(pointerBlock, memoryBlocks[0]);
 
-            for (int i = 0; i < TestServiceStartupArguments.Length; i++)
+            for (var i = 0; i < TestServiceStartupArguments.Length; i++)
             {
-                IntPtr pStr = Marshal.StringToHGlobalUni(TestServiceStartupArguments[i]);
+                var pStr = Marshal.StringToHGlobalUni(TestServiceStartupArguments[i]);
                 memoryBlocks[i + 1] = pStr;
                 Marshal.WriteIntPtr(pointerBlock, (i + 1) * IntPtr.Size, pStr);
             }
@@ -254,30 +245,27 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             finally
             {
                 Marshal.FreeHGlobal(pointerBlock);
-                foreach (IntPtr ptr in memoryBlocks)
+                foreach (var ptr in memoryBlocks)
                 {
                     Marshal.FreeHGlobal(ptr);
                 }
             }
 
-            serviceMainFunctionExitedEvent.Set();
+            _serviceMainFunctionExitedEvent.Set();
 
-            if (!doNotBlockAfterServiceMainFunction && reportedServiceStatuses.Any(s => s.State != ServiceState.Stopped))
+            if (!_doNotBlockAfterServiceMainFunction && _reportedServiceStatuses.Any(s => s.State != ServiceState.Stopped))
             {
-                serviceStoppedEvent.WaitOne(10000); // 10 sec test timeout
+                _serviceStoppedEvent.WaitOne(10000); // 10 sec test timeout
             }
         }
 
-        private Task<int> RunInBackground()
+        private Task<int> RunInBackgroundAsync()
         {
-            Task<int> runTask = Task.Factory.StartNew(sut.Run);
-            runTask.ContinueWith(_ => backroundRunCompletedEvent.Set());
+            var runTask = Task.Factory.StartNew(_sut.Run);
+            runTask.ContinueWith(_ => _backgroundRunCompletedEvent.Set());
             return runTask;
         }
 
-        private void WhenTheOSSendsControlCommand(ServiceControlCommand controlCommand, uint commandSpecificEventType)
-        {
-            serviceControlHandler(controlCommand, commandSpecificEventType, IntPtr.Zero, serviceControlContext);
-        }
+        private void WhenTheOsSendsControlCommand(ServiceControlCommand controlCommand, uint commandSpecificEventType) => _serviceControlHandler(controlCommand, commandSpecificEventType, IntPtr.Zero, _serviceControlContext);
     }
 }

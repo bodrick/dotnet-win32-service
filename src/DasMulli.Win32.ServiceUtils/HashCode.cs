@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DasMulli.Win32.ServiceUtils
@@ -9,28 +9,22 @@ namespace DasMulli.Win32.ServiceUtils
     /// </summary>
     internal struct HashCode
     {
-        private readonly int value;
-        private HashCode(int value)
-        {
-            this.value = value;
-        }
-        public static implicit operator int(HashCode hashCode)
-        {
-            return hashCode.value;
-        }
-        public static HashCode Of<T>(T item)
-        {
-            return new HashCode(GetHashCode(item));
-        }
-        public HashCode And<T>(T item)
-        {
-            return new HashCode(CombineHashCodes(this.value, GetHashCode(item)));
-        }
+        private readonly int _value;
+
+        private HashCode(int value) => _value = value;
+
+        public static implicit operator int(HashCode hashCode) => hashCode._value;
+
+        public static HashCode Of<T>(T item) => new(GetHashCode(item));
+
+        public HashCode And<T>(T item) => new(CombineHashCodes(_value, GetHashCode(item)));
+
         public HashCode AndEach<T>(IEnumerable<T> items)
         {
-            int hashCode = items.Select(GetHashCode).Aggregate(CombineHashCodes);
-            return new HashCode(CombineHashCodes(this.value, hashCode));
+            var hashCode = items.Select(GetHashCode).Aggregate(CombineHashCodes);
+            return new HashCode(CombineHashCodes(_value, hashCode));
         }
+
         private static int CombineHashCodes(int h1, int h2)
         {
             unchecked
@@ -39,9 +33,7 @@ namespace DasMulli.Win32.ServiceUtils
                 return ((h1 << 5) + h1) ^ h2;
             }
         }
-        private static int GetHashCode<T>(T item)
-        {
-            return item == null ? 0 : item.GetHashCode();
-        }
+
+        private static int GetHashCode<T>(T item) => item == null ? 0 : item.GetHashCode();
     }
 }

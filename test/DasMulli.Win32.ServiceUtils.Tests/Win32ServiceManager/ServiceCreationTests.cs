@@ -1,9 +1,9 @@
-﻿using FakeItEasy;
-using FluentAssertions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using FakeItEasy;
+using FluentAssertions;
 using Xunit;
 
 namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
@@ -17,38 +17,39 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         private const string TestServiceDisplayName = "A Test Service";
         private const ErrorSeverity TestServiceErrorSeverity = ErrorSeverity.Ignore;
         private const string TestServiceName = "UnitTestService";
-        private static readonly Win32ServiceCredentials TestCredentials = new Win32ServiceCredentials(@"ADomain\AUser", "WithAPassword");
+        private static readonly Win32ServiceCredentials TestCredentials = new(@"ADomain\AUser", "WithAPassword");
 
-        private static readonly ServiceFailureActions TestServiceFailureActions = new ServiceFailureActions(TimeSpan.FromDays(1), "A reboot message",
+        private static readonly ServiceFailureActions TestServiceFailureActions = new(TimeSpan.FromDays(1), "A reboot message",
             "A restart Command",
-            new List<ScAction>()
+            new List<ScAction>
             {
-                new ScAction {Delay = TimeSpan.FromSeconds(10), Type = ScActionType.ScActionRestart},
-                new ScAction {Delay = TimeSpan.FromSeconds(30), Type = ScActionType.ScActionRestart},
-                new ScAction {Delay = TimeSpan.FromSeconds(60), Type = ScActionType.ScActionRestart}
+                new() { Delay = TimeSpan.FromSeconds(10), Type = ScActionType.ScActionRestart },
+                new() { Delay = TimeSpan.FromSeconds(30), Type = ScActionType.ScActionRestart },
+                new() { Delay = TimeSpan.FromSeconds(60), Type = ScActionType.ScActionRestart }
             });
 
-        private readonly List<string> createdServices = new List<string>();
+        private readonly List<string> _createdServices = new();
 
-        private readonly Dictionary<string, ServiceFailureActions> failureActions = new Dictionary<string, ServiceFailureActions>();
+        private readonly Dictionary<string, ServiceFailureActions> _failureActions = new();
 
-        private readonly Dictionary<string, bool> failureActionsFlags = new Dictionary<string, bool>();
+        private readonly Dictionary<string, bool> _failureActionsFlags = new();
 
-        private readonly INativeInterop nativeInterop = A.Fake<INativeInterop>();
+        private readonly INativeInterop _nativeInterop = A.Fake<INativeInterop>();
 
-        private readonly ServiceControlManager serviceControlManager;
+        private readonly ServiceControlManager _serviceControlManager;
 
-        private readonly Dictionary<string, string> serviceDescriptions = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _serviceDescriptions = new();
 
-        private readonly ServiceUtils.Win32ServiceManager sut;
+        private readonly ServiceUtils.Win32ServiceManager _sut;
 
-        private bool? delayedAutoStartInfoSetOnNativeInterop;
+        private bool? _delayedAutoStartInfoSetOnNativeInterop;
 
         public ServiceCreationTests()
         {
-            serviceControlManager = A.Fake<ServiceControlManager>(o => o.Wrapping(new ServiceControlManager { NativeInterop = nativeInterop }));
+            _serviceControlManager =
+                A.Fake<ServiceControlManager>(o => o.Wrapping(new ServiceControlManager { NativeInterop = _nativeInterop }));
 
-            sut = new ServiceUtils.Win32ServiceManager(TestMachineName, TestDatabaseName, nativeInterop);
+            _sut = new ServiceUtils.Win32ServiceManager(TestMachineName, TestDatabaseName, _nativeInterop);
         }
 
         [Fact]
@@ -61,7 +62,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithDelayedAutoStart(true).Build(), startImmediately: false);
 
             // then
-            delayedAutoStartInfoSetOnNativeInterop.Should().Be(true);
+            _delayedAutoStartInfoSetOnNativeInterop.Should().Be(true);
         }
 
         [Fact]
@@ -74,9 +75,9 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             WhenATestServiceIsCreated(CreateTestServiceDefinition(), startImmediately: false);
 
             // Then
-            failureActions.Should().Contain(TestServiceName, TestServiceFailureActions);
+            _failureActions.Should().Contain(TestServiceName, TestServiceFailureActions);
 
-            failureActionsFlags.Should().Contain(TestServiceName, true);
+            _failureActionsFlags.Should().Contain(TestServiceName, true);
         }
 
         [Fact]
@@ -89,14 +90,14 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             WhenATestServiceIsCreated(CreateTestServiceDefinition(), startImmediately: false);
 
             // Then
-            serviceDescriptions.Should().Contain(TestServiceName, TestServiceDescription);
+            _serviceDescriptions.Should().Contain(TestServiceName, TestServiceDescription);
         }
 
         [Fact]
         public void ItCanStartTheCreatedService()
         {
             // Given
-            ServiceHandle service = GivenServiceCreationIsPossible(ServiceStartType.StartOnDemand);
+            var service = GivenServiceCreationIsPossible(ServiceStartType.StartOnDemand);
             GivenTheServiceCanBeStarted(service);
 
             // When
@@ -116,8 +117,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithDescription(string.Empty).Build(), startImmediately: false);
 
             // Then
-            serviceDescriptions.Should().NotContainKey(TestServiceName);
-            A.CallTo(() => nativeInterop.ChangeServiceConfig2W(A<ServiceHandle>._, A<ServiceConfigInfoTypeLevel>.That.Matches(level => level == ServiceConfigInfoTypeLevel.ServiceDescription), A<IntPtr>._)).MustNotHaveHappened();
+            _serviceDescriptions.Should().NotContainKey(TestServiceName);
+            A.CallTo(() => _nativeInterop.ChangeServiceConfig2W(A<ServiceHandle>._,
+                    A<ServiceConfigInfoTypeLevel>.That.Matches(level => level == ServiceConfigInfoTypeLevel.ServiceDescription),
+                    A<IntPtr>._))
+                .MustNotHaveHappened();
         }
 
         [Fact]
@@ -130,21 +134,24 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithFailureActions(null).Build(), startImmediately: false);
 
             // Then
-            failureActions.Should().NotContainKey(TestServiceName);
-            A.CallTo(() => nativeInterop.ChangeServiceConfig2W(A<ServiceHandle>._, A<ServiceConfigInfoTypeLevel>.That.Matches(level => level == ServiceConfigInfoTypeLevel.FailureActions), A<IntPtr>._)).MustNotHaveHappened();
+            _failureActions.Should().NotContainKey(TestServiceName);
+            A.CallTo(() => _nativeInterop.ChangeServiceConfig2W(A<ServiceHandle>._,
+                    A<ServiceConfigInfoTypeLevel>.That.Matches(level => level == ServiceConfigInfoTypeLevel.FailureActions), A<IntPtr>._))
+                .MustNotHaveHappened();
         }
 
         [Fact]
         public void ItDoesNotSetDelayedAutoStartFlagWhenAutoStartIsDisabledOnCreation()
         {
             // Given
-            ServiceHandle handle = GivenServiceCreationIsPossible(ServiceStartType.StartOnDemand);
+            var handle = GivenServiceCreationIsPossible(ServiceStartType.StartOnDemand);
 
             // When
-            WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithAutoStart(false).WithDelayedAutoStart(true).Build(), startImmediately: false);
+            WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithAutoStart(false).WithDelayedAutoStart(true).Build(),
+                startImmediately: false);
 
             // then
-            delayedAutoStartInfoSetOnNativeInterop.Should().Be(null);
+            _delayedAutoStartInfoSetOnNativeInterop.Should().Be(null);
             A.CallTo(() => handle.SetDelayedAutoStartFlag(A<bool>._)).MustNotHaveHappened();
         }
 
@@ -152,13 +159,13 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         public void ItDoesNotUnsetDelayedAutoStartOnCreation()
         {
             // Given
-            ServiceHandle handle = GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
+            var handle = GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
 
             // When
             WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithDelayedAutoStart(false).Build(), startImmediately: false);
 
             // then
-            delayedAutoStartInfoSetOnNativeInterop.Should().Be(null);
+            _delayedAutoStartInfoSetOnNativeInterop.Should().Be(null);
             A.CallTo(() => handle.SetDelayedAutoStartFlag(A<bool>._)).MustNotHaveHappened();
         }
 
@@ -180,7 +187,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         public void ItThrowsIfTheServiceCannotBeStarted()
         {
             // Given
-            ServiceHandle service = GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
+            var service = GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
             GivenTheServiceCannotBeStarted(service);
 
             // When
@@ -194,7 +201,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         public void ItThrowsPlatformNotSupportedWhenApiSetDllsAreMissing()
         {
             // Given
-            A.CallTo(nativeInterop).Throws<DllNotFoundException>();
+            A.CallTo(_nativeInterop).Throws<DllNotFoundException>();
 
             // When
             Action action = () => WhenATestServiceIsCreated(CreateTestServiceDefinition(), startImmediately: false);
@@ -212,91 +219,79 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenServiceCreationIsPossible(createdServiceStartType);
 
             // When
-            WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithAutoStart(autoStartArgument).Build(), startImmediately: false);
+            WhenATestServiceIsCreated(CreateTestServiceDefinitionBuilder().WithAutoStart(autoStartArgument).Build(),
+                startImmediately: false);
 
             // Then
-            createdServices.Should().Contain(TestServiceName);
+            _createdServices.Should().Contain(TestServiceName);
         }
 
-        private static ServiceDefinition CreateTestServiceDefinition()
-        {
-            return CreateTestServiceDefinitionBuilder().Build();
-        }
+        private static ServiceDefinition CreateTestServiceDefinition() => CreateTestServiceDefinitionBuilder().Build();
 
-        private static ServiceDefinitionBuilder CreateTestServiceDefinitionBuilder()
-        {
-            return new ServiceDefinitionBuilder(TestServiceName)
-                           .WithDisplayName(TestServiceDisplayName)
-                           .WithDescription(TestServiceDescription)
-                           .WithBinaryPath(TestServiceBinaryPath)
-                           .WithCredentials(TestCredentials)
-                           .WithErrorSeverity(TestServiceErrorSeverity)
-                           .WithFailureActions(TestServiceFailureActions)
-                           .WithFailureActionsOnNonCrashFailures(true)
-                           .WithAutoStart(true);
-        }
+        private static ServiceDefinitionBuilder CreateTestServiceDefinitionBuilder() => new ServiceDefinitionBuilder(TestServiceName)
+            .WithDisplayName(TestServiceDisplayName)
+            .WithDescription(TestServiceDescription)
+            .WithBinaryPath(TestServiceBinaryPath)
+            .WithCredentials(TestCredentials)
+            .WithErrorSeverity(TestServiceErrorSeverity)
+            .WithFailureActions(TestServiceFailureActions)
+            .WithFailureActionsOnNonCrashFailures(true)
+            .WithAutoStart(true);
 
-        private Func<ServiceHandle, ServiceConfigInfoTypeLevel, IntPtr, bool> CreateChangeService2WHandler(string serviceName)
-        {
-            return (handle, infoLevel, info) =>
+        private Func<ServiceHandle, ServiceConfigInfoTypeLevel, IntPtr, bool> CreateChangeService2WHandler(string serviceName) =>
+            (handle, infoLevel, info) =>
             {
                 switch (infoLevel)
                 {
                     case ServiceConfigInfoTypeLevel.ServiceDescription:
-                        ServiceDescriptionInfo serviceDescription = Marshal.PtrToStructure<ServiceDescriptionInfo>(info);
+                        var serviceDescription = Marshal.PtrToStructure<ServiceDescriptionInfo>(info);
                         if (string.IsNullOrEmpty(serviceDescription.ServiceDescription))
                         {
-                            serviceDescriptions.Remove(serviceName);
+                            _serviceDescriptions.Remove(serviceName);
                         }
                         else
                         {
-                            serviceDescriptions[serviceName] = serviceDescription.ServiceDescription;
+                            _serviceDescriptions[serviceName] = serviceDescription.ServiceDescription;
                         }
+
                         return true;
 
                     case ServiceConfigInfoTypeLevel.FailureActions:
-                        ServiceFailureActionsInfo failureAction = Marshal.PtrToStructure<ServiceFailureActionsInfo>(info);
+                        var failureAction = Marshal.PtrToStructure<ServiceFailureActionsInfo>(info);
                         if (failureAction.Actions?.Length == 0)
                         {
-                            failureActions.Remove(serviceName);
+                            _failureActions.Remove(serviceName);
                         }
                         else
                         {
-                            failureActions[serviceName] = new ServiceFailureActions(failureAction.ResetPeriod, failureAction.RebootMsg, failureAction.Command, failureAction.Actions);
+                            _failureActions[serviceName] = new ServiceFailureActions(failureAction.ResetPeriod, failureAction.RebootMsg,
+                                failureAction.Command, failureAction.Actions);
                         }
+
                         return true;
 
                     case ServiceConfigInfoTypeLevel.FailureActionsFlag:
-                        ServiceFailureActionsFlag failureActionFlag = Marshal.PtrToStructure<ServiceFailureActionsFlag>(info);
-                        failureActionsFlags[serviceName] = failureActionFlag.Flag;
+                        var failureActionFlag = Marshal.PtrToStructure<ServiceFailureActionsFlag>(info);
+                        _failureActionsFlags[serviceName] = failureActionFlag.Flag;
                         return true;
 
                     case ServiceConfigInfoTypeLevel.DelayedAutoStartInfo:
                         if (info != IntPtr.Zero)
                         {
-                            delayedAutoStartInfoSetOnNativeInterop = Marshal.ReadInt32(info) > 0;
+                            _delayedAutoStartInfoSetOnNativeInterop = Marshal.ReadInt32(info) > 0;
                         }
                         else
                         {
-                            delayedAutoStartInfoSetOnNativeInterop = null;
+                            _delayedAutoStartInfoSetOnNativeInterop = null;
                         }
+
                         return true;
 
                     case ServiceConfigInfoTypeLevel.ServiceSidInfo:
-                        break;
-
                     case ServiceConfigInfoTypeLevel.RequiredPrivilegesInfo:
-                        break;
-
                     case ServiceConfigInfoTypeLevel.PreShutdownInfo:
-                        break;
-
                     case ServiceConfigInfoTypeLevel.TriggerInfo:
-                        break;
-
                     case ServiceConfigInfoTypeLevel.PreferredNode:
-                        break;
-
                     case ServiceConfigInfoTypeLevel.LaunchProtected:
                         break;
 
@@ -306,72 +301,66 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
 
                 return false;
             };
-        }
 
         private ServiceHandle CreateInvalidServiceHandle()
         {
-            ServiceHandle invalidServiceHandle = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = nativeInterop }));
+            var invalidServiceHandle = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = _nativeInterop }));
             A.CallTo(() => invalidServiceHandle.IsInvalid).Returns(value: true);
             return invalidServiceHandle;
         }
 
-        private void GivenCreatingAServiceIsImpossible()
-        {
-            A.CallTo(
-                    () =>
-                        nativeInterop.CreateServiceW(A<ServiceControlManager>._, A<string>._, A<string>._, A<ServiceControlAccessRights>._,
-                            A<ServiceType>._, A<ServiceStartType>._, A<ErrorSeverity>._, A<string>._, A<string>._, IntPtr.Zero, A<string>._,
-                            A<string>._, A<string>._))
-                .Returns(CreateInvalidServiceHandle());
-        }
+        private void GivenCreatingAServiceIsImpossible() => A.CallTo(
+                () =>
+                    _nativeInterop.CreateServiceW(A<ServiceControlManager>._, A<string>._, A<string>._, A<ServiceControlAccessRights>._,
+                        A<ServiceType>._, A<ServiceStartType>._, A<ErrorSeverity>._, A<string>._, A<string>._, IntPtr.Zero, A<string>._,
+                        A<string>._, A<string>._))
+            .Returns(CreateInvalidServiceHandle());
 
         private ServiceHandle GivenServiceCreationIsPossible(ServiceStartType serviceStartType)
         {
             GivenTheServiceControlManagerCanBeOpened();
 
-            ServiceHandle serviceHandle = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = nativeInterop }));
+            var serviceHandle = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = _nativeInterop }));
             A.CallTo(() => serviceHandle.IsInvalid).Returns(value: false);
 
             A.CallTo(
                     () =>
-                        nativeInterop.CreateServiceW(serviceControlManager, TestServiceName, TestServiceDisplayName, A<ServiceControlAccessRights>._,
-                            ServiceType.Win32OwnProcess, serviceStartType, TestServiceErrorSeverity, TestServiceBinaryPath, null, IntPtr.Zero, null,
+                        _nativeInterop.CreateServiceW(_serviceControlManager, TestServiceName, TestServiceDisplayName,
+                            A<ServiceControlAccessRights>._,
+                            ServiceType.Win32OwnProcess, serviceStartType, TestServiceErrorSeverity, TestServiceBinaryPath, null,
+                            IntPtr.Zero, null,
                             TestCredentials.UserName, TestCredentials.Password))
                 .ReturnsLazily(call =>
                 {
-                    string serviceName = (string)call.Arguments[argumentIndex: 1];
-                    createdServices.Add(serviceName);
-                    A.CallTo(() => nativeInterop.ChangeServiceConfig2W(serviceHandle, A<ServiceConfigInfoTypeLevel>._, A<IntPtr>._))
+                    var serviceName = (string)call.Arguments[argumentIndex: 1];
+                    _createdServices.Add(serviceName);
+                    A.CallTo(() => _nativeInterop.ChangeServiceConfig2W(serviceHandle, A<ServiceConfigInfoTypeLevel>._, A<IntPtr>._))
                         .ReturnsLazily(CreateChangeService2WHandler(serviceName));
                     return serviceHandle;
                 });
             return serviceHandle;
         }
 
-        private void GivenTheServiceCanBeStarted(ServiceHandle service)
-        {
-            A.CallTo(() => nativeInterop.StartServiceW(service, A<uint>._, A<IntPtr>._))
-                .Returns(value: true);
-        }
+        private void GivenTheServiceCanBeStarted(ServiceHandle service) => A
+            .CallTo(() => _nativeInterop.StartServiceW(service, A<uint>._, A<IntPtr>._))
+            .Returns(value: true);
 
-        private void GivenTheServiceCannotBeStarted(ServiceHandle service)
-        {
-            A.CallTo(() => nativeInterop.StartServiceW(service, A<uint>._, A<IntPtr>._))
-                .Returns(value: false);
-        }
+        private void GivenTheServiceCannotBeStarted(ServiceHandle service) => A
+            .CallTo(() => _nativeInterop.StartServiceW(service, A<uint>._, A<IntPtr>._))
+            .Returns(value: false);
 
         private void GivenTheServiceControlManagerCanBeOpened()
         {
-            A.CallTo(() => serviceControlManager.IsInvalid).Returns(value: false);
-            A.CallTo(() => nativeInterop.OpenSCManagerW(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
-                .Returns(serviceControlManager);
+            A.CallTo(() => _serviceControlManager.IsInvalid).Returns(value: false);
+            A.CallTo(() => _nativeInterop.OpenSCManagerW(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
+                .Returns(_serviceControlManager);
         }
 
         private void GivenTheServiceControlManagerCannotBeOpenend()
         {
-            A.CallTo(() => serviceControlManager.IsInvalid).Returns(value: true);
-            A.CallTo(() => nativeInterop.OpenSCManagerW(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
-                .Returns(serviceControlManager);
+            A.CallTo(() => _serviceControlManager.IsInvalid).Returns(value: true);
+            A.CallTo(() => _nativeInterop.OpenSCManagerW(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
+                .Returns(_serviceControlManager);
         }
 
         [Fact]
@@ -387,9 +376,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             action.Should().Throw<Win32Exception>();
         }
 
-        private void WhenATestServiceIsCreated(ServiceDefinition serviceDefinition, bool startImmediately)
-        {
-            sut.CreateService(serviceDefinition, startImmediately);
-        }
+        private void WhenATestServiceIsCreated(ServiceDefinition serviceDefinition, bool startImmediately) =>
+            _sut.CreateService(serviceDefinition, startImmediately);
     }
 }

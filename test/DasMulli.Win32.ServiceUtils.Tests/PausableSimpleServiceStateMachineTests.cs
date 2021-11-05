@@ -1,31 +1,24 @@
-﻿using FakeItEasy;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using FakeItEasy;
 using Xunit;
 
 namespace DasMulli.Win32.ServiceUtils.Tests
 {
-    [SuppressMessage("ReSharper", "ArgumentsStyleLiteral")]
     public class PausableServiceStateMachineTests
     {
-        private static readonly string[] TestStartupArguments = new string[] { "Arg1", "Arg2" };
+        private static readonly string[] TestStartupArguments = { "Arg1", "Arg2" };
 
-        private readonly IPausableWin32Service serviceImplmentation = A.Fake<IPausableWin32Service>();
-        private readonly ServiceStatusReportCallback statusReportCallback = A.Fake<ServiceStatusReportCallback>();
+        private readonly IPausableWin32Service _serviceImplementation = A.Fake<IPausableWin32Service>();
+        private readonly ServiceStatusReportCallback _statusReportCallback = A.Fake<ServiceStatusReportCallback>();
 
         // subject under test
-        private readonly IWin32ServiceStateMachine sut;
+        private readonly IWin32ServiceStateMachine _sut;
 
-        private ServiceStoppedCallback serviceStoppedCallbackPassedToImplementation;
+        private ServiceStoppedCallback _serviceStoppedCallbackPassedToImplementation;
 
-        public PausableServiceStateMachineTests()
-        {
-            sut = new PausableServiceStateMachine(serviceImplmentation);
-        }
+        public PausableServiceStateMachineTests() => _sut = new PausableServiceStateMachine(_serviceImplementation);
 
-        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Needed by test framework.")]
-        [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Needed by test framework.")]
         public static IEnumerable<object[]> UnsupportedCommandExamples
         {
             get
@@ -42,11 +35,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             GivenTheServiceHasBeenStarted();
 
             // When
-            sut.OnCommand(ServiceControlCommand.Continue, 0);
+            _sut.OnCommand(ServiceControlCommand.Continue, 0);
 
             // Then
-            A.CallTo(() => serviceImplmentation.Continue()).MustHaveHappened();
-            A.CallTo(() => statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _serviceImplementation.Continue()).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
         }
 
         [Theory, MemberData(nameof(UnsupportedCommandExamples))]
@@ -56,11 +49,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             GivenTheServiceHasBeenStarted();
 
             // When
-            sut.OnCommand(unsupportedCommand, 0);
+            _sut.OnCommand(unsupportedCommand, 0);
 
             // Then no other calls than the startup calls must have been made
-            A.CallTo(statusReportCallback).MustHaveHappenedOnceOrLess();
-            A.CallTo(serviceImplmentation).MustHaveHappenedOnceOrLess();
+            A.CallTo(_statusReportCallback).MustHaveHappenedOnceOrLess();
+            A.CallTo(_serviceImplementation).MustHaveHappenedOnceOrLess();
         }
 
         [Fact]
@@ -70,11 +63,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             GivenTheServiceHasBeenStarted();
 
             // When
-            sut.OnCommand(ServiceControlCommand.Pause, 0);
+            _sut.OnCommand(ServiceControlCommand.Pause, 0);
 
             // Then
-            A.CallTo(() => serviceImplmentation.Pause()).MustHaveHappened();
-            A.CallTo(() => statusReportCallback(ServiceState.Paused, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _serviceImplementation.Pause()).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Paused, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
         }
 
         [Fact]
@@ -82,27 +75,27 @@ namespace DasMulli.Win32.ServiceUtils.Tests
         {
             // Given
             GivenTheServiceHasBeenStarted();
-            A.CallTo(serviceImplmentation).Throws<Exception>();
+            A.CallTo(_serviceImplementation).Throws<Exception>();
 
             // When
-            sut.OnCommand(ServiceControlCommand.Stop, 0);
+            _sut.OnCommand(ServiceControlCommand.Stop, 0);
 
             // Then
-            A.CallTo(() => statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, 0))
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, 0))
                 .MustHaveHappened();
         }
 
         [Fact]
-        public void ItShallReportStoppedImplmentationThrowsOnStartup()
+        public void ItShallReportStoppedImplementationThrowsOnStartup()
         {
             // Given
-            A.CallTo(serviceImplmentation).Throws<Exception>();
+            A.CallTo(_serviceImplementation).Throws<Exception>();
 
             // When
-            sut.OnStart(TestStartupArguments, statusReportCallback);
+            _sut.OnStart(TestStartupArguments, _statusReportCallback);
 
             // Then
-            A.CallTo(() => statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, 0))
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, 0))
                 .MustHaveHappened();
         }
 
@@ -113,10 +106,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             GivenTheServiceHasBeenStarted();
 
             // When the stopped callback is invoked
-            serviceStoppedCallbackPassedToImplementation();
+            _serviceStoppedCallbackPassedToImplementation();
 
             // Then
-            A.CallTo(() => statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, 0, 0))
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, 0, 0))
                 .MustHaveHappened();
         }
 
@@ -124,11 +117,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests
         public void ItShallStartImplementationAndReportStarted()
         {
             // When
-            sut.OnStart(TestStartupArguments, statusReportCallback);
+            _sut.OnStart(TestStartupArguments, _statusReportCallback);
 
             // Then
-            A.CallTo(() => serviceImplmentation.Start(TestStartupArguments, A<ServiceStoppedCallback>._)).MustHaveHappened();
-            A.CallTo(() => statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _serviceImplementation.Start(TestStartupArguments, A<ServiceStoppedCallback>._)).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
         }
 
         [Fact]
@@ -138,23 +131,20 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             GivenTheServiceHasBeenStarted();
 
             // When
-            sut.OnCommand(ServiceControlCommand.Stop, 0);
+            _sut.OnCommand(ServiceControlCommand.Stop, 0);
 
             // Then
-            A.CallTo(() => serviceImplmentation.Stop()).MustHaveHappened();
-            A.CallTo(() => statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _serviceImplementation.Stop()).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, 0, 0)).MustHaveHappened();
         }
 
         private void GivenTheServiceHasBeenStarted()
         {
-            A.CallTo(() => serviceImplmentation.Start(null, null))
+            A.CallTo(() => _serviceImplementation.Start(null, null))
                 .WithAnyArguments()
-                .Invokes((string[] args, ServiceStoppedCallback stoppedCallback) =>
-                {
-                    serviceStoppedCallbackPassedToImplementation = stoppedCallback;
-                });
+                .Invokes((string[] _, ServiceStoppedCallback stoppedCallback) => _serviceStoppedCallbackPassedToImplementation = stoppedCallback);
 
-            sut.OnStart(TestStartupArguments, statusReportCallback);
+            _sut.OnStart(TestStartupArguments, _statusReportCallback);
         }
     }
 }

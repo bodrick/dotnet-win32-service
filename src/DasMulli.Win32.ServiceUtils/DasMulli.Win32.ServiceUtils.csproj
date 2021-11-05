@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
@@ -10,10 +10,6 @@
     <Description>Helper classes to set up and run as Win32 services without depending on full .NET Framework.</Description>
     <PackageTags>windows;service;.net;core;netstandard</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" PrivateAssets="All" />
-  </ItemGroup>
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">

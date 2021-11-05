@@ -1,13 +1,10 @@
-﻿using FakeItEasy;
-using FluentAssertions;
 using System;
-using System.Diagnostics.CodeAnalysis;
+using FakeItEasy;
+using FluentAssertions;
 using Xunit;
 
 namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
 {
-    [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "Testing")]
-    [SuppressMessage("ReSharper", "ObjectCreationAsStatement", Justification = "Testing ctors")]
     public class ArgumentValidationTests
     {
         [Fact]

@@ -1,8 +1,8 @@
-﻿using DasMulli.Win32.ServiceUtils;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using DasMulli.Win32.ServiceUtils;
 
 namespace TestService
 {
@@ -69,12 +69,12 @@ namespace TestService
         private static void RegisterService()
         {
             // Environment.GetCommandLineArgs() includes the current DLL from a "dotnet my.dll --register-service" call, which is not passed to Main()
-            System.Collections.Generic.IEnumerable<string> remainingArgs = Environment.GetCommandLineArgs()
+            var remainingArgs = Environment.GetCommandLineArgs()
                 .Where(arg => arg != RegisterServiceFlag)
                 .Select(EscapeCommandLineArgument)
                 .Append(RunAsServiceFlag);
 
-            string host = Process.GetCurrentProcess().MainModule.FileName;
+            var host = Process.GetCurrentProcess().MainModule.FileName;
 
             if (!host.EndsWith("dotnet.exe", StringComparison.OrdinalIgnoreCase))
             {
@@ -82,11 +82,11 @@ namespace TestService
                 remainingArgs = remainingArgs.Skip(1);
             }
 
-            string fullServiceCommand = host + " " + string.Join(" ", remainingArgs);
+            var fullServiceCommand = host + " " + string.Join(" ", remainingArgs);
 
             // Do not use LocalSystem in production.. but this is good for demos as LocalSystem will have access to some random git-clone path
             // When the service is already registered and running, it will be reconfigured but not restarted
-            ServiceDefinition serviceDefinition = new ServiceDefinitionBuilder(ServiceName)
+            var serviceDefinition = new ServiceDefinitionBuilder(ServiceName)
                 .WithDisplayName(ServiceDisplayName)
                 .WithDescription(ServiceDescription)
                 .WithBinaryPath(fullServiceCommand)
@@ -101,14 +101,14 @@ namespace TestService
 
         private static void RunAsService(string[] args)
         {
-            TestWin32Service testService = new TestWin32Service(args.Where(a => a != RunAsServiceFlag).ToArray());
-            Win32ServiceHost serviceHost = new Win32ServiceHost(testService);
+            TestWin32Service testService = new(args.Where(a => a != RunAsServiceFlag).ToArray());
+            Win32ServiceHost serviceHost = new(testService);
             serviceHost.Run();
         }
 
         private static void RunInteractive(string[] args)
         {
-            TestWin32Service testService = new TestWin32Service(args.Where(a => a != InteractiveFlag).ToArray());
+            TestWin32Service testService = new(args.Where(a => a != InteractiveFlag).ToArray());
             testService.Start(Array.Empty<string>(), () => { });
             Console.WriteLine("Running interactively, press enter to stop.");
             Console.ReadLine();

@@ -1,4 +1,4 @@
-﻿namespace DasMulli.Win32.ServiceUtils
+namespace DasMulli.Win32.ServiceUtils
 {
     /// <inheritdoc />
     /// <summary>
@@ -8,14 +8,14 @@
     public interface IPausableWin32Service : IWin32Service
     {
         /// <summary>
+        /// Continues (resumes) the service.
+        /// </summary>
+        void Continue();
+
+        /// <summary>
         /// Pauses the service.
         /// Expect either <see cref="Continue"/> or <see cref="IWin32Service.Stop"/> to be called afterwards.
         /// </summary>
         void Pause();
-
-        /// <summary>
-        /// Continues (resumes) the service.
-        /// </summary>
-        void Continue();
     }
 }

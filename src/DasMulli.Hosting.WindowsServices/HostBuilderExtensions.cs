@@ -1,4 +1,4 @@
-﻿using DasMulli.Win32.ServiceUtils;
+using DasMulli.Win32.ServiceUtils;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 
@@ -15,9 +15,6 @@ namespace DasMulli.Hosting.WindowsServices
         /// <param name="host">An instance of the <see cref="IHost"/> to host in the Windows service.</param>
         /// <param name="serviceName">The name of the service to run.</param>
         [PublicAPI]
-        public static void RunAsService(this IHost host, string serviceName = null)
-        {
-            new Win32ServiceHost(new HostService(host, serviceName)).Run();
-        }
+        public static void RunAsService(this IHost host, string? serviceName = null) => new Win32ServiceHost(new HostService(host, serviceName)).Run();
     }
 }

@@ -12,7 +12,7 @@ namespace DasMulli.Win32.ServiceUtils
     [StructLayout(LayoutKind.Sequential)]
     [SuppressMessage("ReSharper", "ConvertToAutoProperty", Justification = "Keep fields to preserve explicit struct layout for marshalling.")]
     [PublicAPI]
-    public struct ScAction:IEquatable<ScAction>
+    public struct ScAction : IEquatable<ScAction>
     {
         private ScActionType _Type;
         private uint _Delay;
@@ -45,10 +45,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// Indicates whether the current object is equal to another object of the same type.
         /// </summary>
         /// <param name="other">An object to compare with this object.</param>
-        public bool Equals(ScAction other)
-        {
-            return _Type == other._Type && _Delay == other._Delay;
-        }
+        public bool Equals(ScAction other) => _Type == other._Type && _Delay == other._Delay;
 
         /// <summary>
         /// Determines whether the specified <see cref="object"/> is equal to this instance.
@@ -56,7 +53,11 @@ namespace DasMulli.Win32.ServiceUtils
         /// <param name="obj">The <see cref="object"/> to compare with this instance.</param>
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
             return obj is ScAction && Equals((ScAction)obj);
         }
 
@@ -66,11 +67,8 @@ namespace DasMulli.Win32.ServiceUtils
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
-        public override int GetHashCode()
-        {
-            return HashCode
-                .Of(this.Delay)
-                .And(this.Type);
-        }
+        public override int GetHashCode() => HashCode
+                .Of(Delay)
+                .And(Type);
     }
 }

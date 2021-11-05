@@ -1,10 +1,9 @@
-﻿namespace DasMulli.Win32.ServiceUtils.Tests
+namespace DasMulli.Win32.ServiceUtils.Tests
 {
     internal static class ServiceDefinitionBuilderExtensions
     {
-        public static ServiceDefinition BuildNonValidating(this ServiceDefinitionBuilder builder)
-        {
-            return new ServiceDefinition(builder.ServiceName, builder.BinaryPath)
+        public static ServiceDefinition BuildNonValidating(this ServiceDefinitionBuilder builder) =>
+            new(builder.ServiceName, builder.BinaryPath)
             {
                 DisplayName = builder.DisplayName,
                 Description = builder.Description,
@@ -14,6 +13,5 @@
                 AutoStart = builder.AutoStart,
                 ErrorSeverity = builder.ErrorSeverity
             };
-        }
     }
 }

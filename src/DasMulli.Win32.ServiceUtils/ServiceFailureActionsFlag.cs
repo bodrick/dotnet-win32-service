@@ -10,10 +10,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceFailureActionsFlag"/> struct.
         /// </summary>
-        public ServiceFailureActionsFlag(bool enabled)
-        {
-            _fFailureActionsOnNonCrashFailures = enabled;
-        }
+        public ServiceFailureActionsFlag(bool enabled) => _fFailureActionsOnNonCrashFailures = enabled;
 
         public bool Flag
         {

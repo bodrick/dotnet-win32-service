@@ -1,8 +1,8 @@
-﻿using DasMulli.Win32.ServiceUtils;
+﻿using System;
+using DasMulli.Win32.ServiceUtils;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using Microsoft.Extensions.Hosting;
 
 namespace TestService
@@ -13,10 +13,7 @@ namespace TestService
         private bool stopRequestedByWindows;
         private IWebHost webHost;
 
-        public TestWin32Service(string[] commandLineArguments)
-        {
-            this.commandLineArguments = commandLineArguments;
-        }
+        public TestWin32Service(string[] commandLineArguments) => this.commandLineArguments = commandLineArguments;
 
         public string ServiceName => "Test Service";
 
@@ -37,7 +34,7 @@ namespace TestService
                 combinedArguments = commandLineArguments;
             }
 
-            IConfigurationRoot config = new ConfigurationBuilder()
+            var config = new ConfigurationBuilder()
                 .AddCommandLine(combinedArguments)
                 .Build();
 

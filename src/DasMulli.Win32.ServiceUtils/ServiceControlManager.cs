@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
@@ -9,40 +9,18 @@ namespace DasMulli.Win32.ServiceUtils
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     internal class ServiceControlManager : SafeHandle
     {
-        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Exposed for testing via InternalsVisibleTo.")]
-        internal INativeInterop NativeInterop { get; set; } = Win32Interop.Wrapper;
-
         internal ServiceControlManager() : base(IntPtr.Zero, ownsHandle: true)
         {
-        }
-
-        protected override bool ReleaseHandle()
-        {
-            return NativeInterop.CloseServiceHandle(handle);
         }
 
         public override bool IsInvalid
         {
             [System.Security.SecurityCritical]
-            get
-            {
-                return handle == IntPtr.Zero;
-            }
+            get => handle == IntPtr.Zero;
         }
 
-        internal static ServiceControlManager Connect(INativeInterop nativeInterop, string machineName, string databaseName, ServiceControlManagerAccessRights desiredAccessRights)
-        {
-            var mgr = nativeInterop.OpenSCManagerW(machineName, databaseName, desiredAccessRights);
-
-            mgr.NativeInterop = nativeInterop;
-
-            if (mgr.IsInvalid)
-            {
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-
-            return mgr;
-        }
+        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Exposed for testing via InternalsVisibleTo.")]
+        internal INativeInterop NativeInterop { get; set; } = Win32Interop.Wrapper;
 
         public ServiceHandle CreateService(string serviceName, string displayName, string binaryPath, ServiceType serviceType, ServiceStartType startupType, ErrorSeverity errorSeverity, Win32ServiceCredentials credentials)
         {
@@ -56,16 +34,13 @@ namespace DasMulli.Win32.ServiceUtils
             {
                 throw new Win32Exception(Marshal.GetLastWin32Error());
             }
-            
+
             return service;
         }
 
         public ServiceHandle OpenService(string serviceName, ServiceControlAccessRights desiredControlAccess)
         {
-            ServiceHandle service;
-            Win32Exception errorException;
-
-            if (!TryOpenService(serviceName, desiredControlAccess, out service, out errorException))
+            if (!TryOpenService(serviceName, desiredControlAccess, out var service, out var errorException))
             {
                 throw errorException;
             }
@@ -90,5 +65,21 @@ namespace DasMulli.Win32.ServiceUtils
             errorException = null;
             return true;
         }
+
+        internal static ServiceControlManager Connect(INativeInterop nativeInterop, string machineName, string databaseName, ServiceControlManagerAccessRights desiredAccessRights)
+        {
+            var mgr = nativeInterop.OpenSCManagerW(machineName, databaseName, desiredAccessRights);
+
+            mgr.NativeInterop = nativeInterop;
+
+            if (mgr.IsInvalid)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+
+            return mgr;
+        }
+
+        protected override bool ReleaseHandle() => NativeInterop.CloseServiceHandle(handle);
     }
 }

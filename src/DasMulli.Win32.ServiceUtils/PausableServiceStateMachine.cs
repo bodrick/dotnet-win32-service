@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace DasMulli.Win32.ServiceUtils
@@ -10,17 +10,14 @@ namespace DasMulli.Win32.ServiceUtils
     /// <seealso cref="IWin32ServiceStateMachine" />
     public sealed class PausableServiceStateMachine : IWin32ServiceStateMachine
     {
-        private readonly IPausableWin32Service serviceImplementation;
-        private ServiceStatusReportCallback statusReportCallback;
+        private readonly IPausableWin32Service _serviceImplementation;
+        private ServiceStatusReportCallback _statusReportCallback;
 
         /// <summary>
         /// Initializes a new <see cref="PausableServiceStateMachine"/> to run the specified service.
         /// </summary>
         /// <param name="serviceImplementation">The service implementation.</param>
-        public PausableServiceStateMachine(IPausableWin32Service serviceImplementation)
-        {
-            this.serviceImplementation = serviceImplementation;
-        }
+        public PausableServiceStateMachine(IPausableWin32Service serviceImplementation) => _serviceImplementation = serviceImplementation;
 
         /// <summary>
         /// Called by the service host when a command was received from Windows' service system.
@@ -34,16 +31,16 @@ namespace DasMulli.Win32.ServiceUtils
             switch (command)
             {
                 case ServiceControlCommand.Stop:
-                    PerformAction(ServiceState.StopPending, ServiceState.Stopped, serviceImplementation.Stop, ServiceAcceptedControlCommandsFlags.None);
+                    PerformAction(ServiceState.StopPending, ServiceState.Stopped, _serviceImplementation.Stop, ServiceAcceptedControlCommandsFlags.None);
                     break;
 
                 case ServiceControlCommand.Pause:
-                    PerformAction(ServiceState.PausePending, ServiceState.Paused, serviceImplementation.Pause,
+                    PerformAction(ServiceState.PausePending, ServiceState.Paused, _serviceImplementation.Pause,
                         ServiceAcceptedControlCommandsFlags.PauseContinueStop);
                     break;
 
                 case ServiceControlCommand.Continue:
-                    PerformAction(ServiceState.ContinuePending, ServiceState.Running, serviceImplementation.Continue,
+                    PerformAction(ServiceState.ContinuePending, ServiceState.Running, _serviceImplementation.Continue,
                         ServiceAcceptedControlCommandsFlags.PauseContinueStop);
                     break;
             }
@@ -60,11 +57,11 @@ namespace DasMulli.Win32.ServiceUtils
         [SuppressMessage("ReSharper", "ParameterHidesMember")]
         public void OnStart(string[] startupArguments, ServiceStatusReportCallback statusReportCallback)
         {
-            this.statusReportCallback = statusReportCallback;
+            _statusReportCallback = statusReportCallback;
 
             try
             {
-                serviceImplementation.Start(startupArguments, HandleServiceImplementationStoppedOnItsOwn);
+                _serviceImplementation.Start(startupArguments, HandleServiceImplementationStoppedOnItsOwn);
 
                 statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, win32ExitCode: 0, waitHint: 0);
             }
@@ -74,24 +71,21 @@ namespace DasMulli.Win32.ServiceUtils
             }
         }
 
-        private void HandleServiceImplementationStoppedOnItsOwn()
-        {
-            statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
-        }
+        private void HandleServiceImplementationStoppedOnItsOwn() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
 
         private void PerformAction(ServiceState pendingState, ServiceState completedState, Action serviceAction,
             ServiceAcceptedControlCommandsFlags allowedControlCommandsFlags)
         {
-            statusReportCallback(pendingState, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 3000);
+            _statusReportCallback(pendingState, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 3000);
 
             try
             {
                 serviceAction();
-                statusReportCallback(completedState, allowedControlCommandsFlags, 0, waitHint: 0);
+                _statusReportCallback(completedState, allowedControlCommandsFlags, 0, waitHint: 0);
             }
             catch
             {
-                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, waitHint: 0);
+                _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, waitHint: 0);
             }
         }
     }

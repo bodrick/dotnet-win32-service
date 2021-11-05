@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DasMulli.Win32.ServiceUtils
 {
@@ -16,35 +16,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// Initializes a new <see cref="SimpleServiceStateMachine"/> to run the specified service.
         /// </summary>
         /// <param name="serviceImplementation">The service implementation.</param>
-        public SimpleServiceStateMachine(IWin32Service serviceImplementation)
-        {
-            this.serviceImplementation = serviceImplementation;
-        }
-
-        /// <summary>
-        /// Called by the service host to start the service. When called by <see cref="Win32ServiceHost"/>,
-        /// the service startup arguments received from Windows are specified.
-        /// Use the provided <see cref="ServiceStatusReportCallback"/> to notify the service manager about
-        /// state changes such as started, paused etc.
-        /// </summary>
-        /// <param name="startupArguments">The startup arguments.</param>
-        /// <param name="statusReportCallback">Notifies the service manager of a status change.</param>
-        [SuppressMessage("ReSharper", "ParameterHidesMember")]
-        public void OnStart(string[] startupArguments, ServiceStatusReportCallback statusReportCallback)
-        {
-            this.statusReportCallback = statusReportCallback;
-
-            try
-            {
-                serviceImplementation.Start(startupArguments, HandleServiceImplementationStoppedOnItsOwn);
-
-                statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.Stop, win32ExitCode: 0, waitHint: 0);
-            }
-            catch
-            {
-                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: -1, waitHint: 0);
-            }
-        }
+        public SimpleServiceStateMachine(IWin32Service serviceImplementation) => this.serviceImplementation = serviceImplementation;
 
         /// <summary>
         /// Called by the service host when a command was received from Windows' service system.
@@ -72,9 +44,31 @@ namespace DasMulli.Win32.ServiceUtils
             }
         }
 
-        private void HandleServiceImplementationStoppedOnItsOwn()
+        /// <summary>
+        /// Called by the service host to start the service. When called by <see cref="Win32ServiceHost"/>,
+        /// the service startup arguments received from Windows are specified.
+        /// Use the provided <see cref="ServiceStatusReportCallback"/> to notify the service manager about
+        /// state changes such as started, paused etc.
+        /// </summary>
+        /// <param name="startupArguments">The startup arguments.</param>
+        /// <param name="statusReportCallback">Notifies the service manager of a status change.</param>
+        [SuppressMessage("ReSharper", "ParameterHidesMember")]
+        public void OnStart(string[] startupArguments, ServiceStatusReportCallback statusReportCallback)
         {
-            statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
+            this.statusReportCallback = statusReportCallback;
+
+            try
+            {
+                serviceImplementation.Start(startupArguments, HandleServiceImplementationStoppedOnItsOwn);
+
+                statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.Stop, win32ExitCode: 0, waitHint: 0);
+            }
+            catch
+            {
+                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: -1, waitHint: 0);
+            }
         }
+
+        private void HandleServiceImplementationStoppedOnItsOwn() => statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
     }
 }

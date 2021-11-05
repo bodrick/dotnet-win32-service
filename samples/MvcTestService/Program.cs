@@ -1,13 +1,13 @@
-﻿using DasMulli.Hosting.WindowsServices;
-using DasMulli.Win32.ServiceUtils;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using DasMulli.Hosting.WindowsServices;
+using DasMulli.Win32.ServiceUtils;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using static System.Console;
 
 namespace MvcTestService
@@ -150,10 +150,7 @@ namespace MvcTestService
             CreateHostBuilder(args).Build().RunAsService(ServiceName);
         }
 
-        private static void RunInteractive(string[] args)
-        {
-            CreateHostBuilder(args.Where(a => a != InteractiveFlag).ToArray()).Build().Run();
-        }
+        private static void RunInteractive(string[] args) => CreateHostBuilder(args.Where(a => a != InteractiveFlag).ToArray()).Build().Run();
 
         private static void UnregisterService()
         {

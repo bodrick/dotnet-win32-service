@@ -1,6 +1,6 @@
-﻿using JetBrains.Annotations;
 using System;
 using System.ComponentModel;
+using JetBrains.Annotations;
 
 namespace DasMulli.Win32.ServiceUtils
 {
@@ -51,8 +51,9 @@ namespace DasMulli.Win32.ServiceUtils
 #if NETSTANDARD2_0
         [Browsable(false)]
 #endif
+
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Misspelled, use '" + nameof(StartPending) +"' instead. This member will be removed in upcoming versions.", true)]
+        [Obsolete("Misspelled, use '" + nameof(StartPending) + "' instead. This member will be removed in upcoming versions.", true)]
         StartPening = StartPending
     }
 }

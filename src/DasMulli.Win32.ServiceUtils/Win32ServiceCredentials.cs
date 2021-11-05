@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using JetBrains.Annotations;
 
 namespace DasMulli.Win32.ServiceUtils
@@ -11,20 +11,24 @@ namespace DasMulli.Win32.ServiceUtils
     public struct Win32ServiceCredentials : IEquatable<Win32ServiceCredentials>
     {
         /// <summary>
-        /// Gets the name of the user.
+        /// The Local Service account. The service will have minimum access to the system and anonymous network credentials.
+        /// Recommended for use in logic-only applications.
+        /// Consider using a custom account instead for granular control over file system permissions.
         /// </summary>
-        /// <value>
-        /// The name of the user.
-        /// </value>
-        public string UserName { get; }
+        public static Win32ServiceCredentials LocalService = new(@"NT AUTHORITY\LocalService", password: null);
 
         /// <summary>
-        /// Gets the password.
+        /// The Local System account. The service will have full access to the system and machine network credentials.
+        /// Not recommended to use in production environments.
         /// </summary>
-        /// <value>
-        /// The password.
-        /// </value>
-        public string Password { get; }
+        public static Win32ServiceCredentials LocalSystem = new(userName: null, password: null);
+
+        /// <summary>
+        /// The Network Service account. The service will have minimum access to the system and machine network credentials.
+        /// Recommended for use in logic-only applications that need to authenticate to networks using machine credentials.
+        /// Consider using a custom account instead for granular control over file system permissions and network authorization control.
+        /// </summary>
+        public static Win32ServiceCredentials NetworkService = new(@"NT AUTHORITY\NetworkService", password: null);
 
         /// <summary>
         /// Creates a new <see cref="Win32ServiceCredentials"/> instance to represent an account under which to run Windows services.
@@ -38,33 +42,36 @@ namespace DasMulli.Win32.ServiceUtils
         }
 
         /// <summary>
-        /// The Local System account. The service will have full access to the system and machine network credentials.
-        /// Not recommended to use in production environments.
+        /// Gets the password.
         /// </summary>
-        public static Win32ServiceCredentials LocalSystem = new Win32ServiceCredentials(userName: null, password: null);
+        /// <value>
+        /// The password.
+        /// </value>
+        public string Password { get; }
 
         /// <summary>
-        /// The Local Service account. The service will have minimum access to the system and anonymous network credentials.
-        /// Recommended for use in logic-only applications.
-        /// Consider using a custom account instead for granular control over file system permissions.
+        /// Gets the name of the user.
         /// </summary>
-        public static Win32ServiceCredentials LocalService = new Win32ServiceCredentials(@"NT AUTHORITY\LocalService", password: null);
+        /// <value>
+        /// The name of the user.
+        /// </value>
+        public string UserName { get; }
 
         /// <summary>
-        /// The Network Service account. The service will have minimum access to the system and machine network credentials.
-        /// Recommended for use in logic-only applications that need to authenticate to networks using machine credentials.
-        /// Consider using a custom account instead for granular control over file system permissions and network authorization control.
+        /// Implements the operator <c>!=</c>.
         /// </summary>
-        public static Win32ServiceCredentials NetworkService = new Win32ServiceCredentials(@"NT AUTHORITY\NetworkService", password: null);
+        public static bool operator !=(Win32ServiceCredentials left, Win32ServiceCredentials right) => !left.Equals(right);
+
+        /// <summary>
+        /// Implements the operator <c>==</c>.
+        /// </summary>
+        public static bool operator ==(Win32ServiceCredentials left, Win32ServiceCredentials right) => left.Equals(right);
 
         /// <summary>
         /// Indicates whether the current object is equal to another object of the same type.
         /// </summary>
         /// <param name="other">An object to compare with this object.</param>
-        public bool Equals(Win32ServiceCredentials other)
-        {
-            return string.Equals(UserName, other.UserName) && string.Equals(Password, other.Password);
-        }
+        public bool Equals(Win32ServiceCredentials other) => string.Equals(UserName, other.UserName) && string.Equals(Password, other.Password);
 
         /// <summary>
         /// Determines whether the specified <see cref="object"/> is equal to this instance.
@@ -76,7 +83,7 @@ namespace DasMulli.Win32.ServiceUtils
             {
                 return false;
             }
-            return obj is Win32ServiceCredentials && Equals((Win32ServiceCredentials) obj);
+            return obj is Win32ServiceCredentials && Equals((Win32ServiceCredentials)obj);
         }
 
         /// <summary>
@@ -89,24 +96,8 @@ namespace DasMulli.Win32.ServiceUtils
         {
             unchecked
             {
-                return ((UserName?.GetHashCode() ?? 0)*397) ^ (Password?.GetHashCode() ?? 0);
+                return ((UserName?.GetHashCode() ?? 0) * 397) ^ (Password?.GetHashCode() ?? 0);
             }
-        }
-
-        /// <summary>
-        /// Implements the operator <c>==</c>.
-        /// </summary>
-        public static bool operator ==(Win32ServiceCredentials left, Win32ServiceCredentials right)
-        {
-            return left.Equals(right);
-        }
-
-        /// <summary>
-        /// Implements the operator <c>!=</c>.
-        /// </summary>
-        public static bool operator !=(Win32ServiceCredentials left, Win32ServiceCredentials right)
-        {
-            return !left.Equals(right);
         }
     }
 }

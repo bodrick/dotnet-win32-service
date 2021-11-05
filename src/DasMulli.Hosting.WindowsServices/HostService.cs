@@ -1,8 +1,8 @@
-﻿using DasMulli.Win32.ServiceUtils;
+﻿using System.Reflection;
+using DasMulli.Win32.ServiceUtils;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
 
 namespace DasMulli.Hosting.WindowsServices
 {

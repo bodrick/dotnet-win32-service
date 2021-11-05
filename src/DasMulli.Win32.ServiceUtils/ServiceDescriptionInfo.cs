@@ -11,15 +11,12 @@ namespace DasMulli.Win32.ServiceUtils
         [MarshalAs(UnmanagedType.LPWStr)]
         private string serviceDescription;
 
-        public ServiceDescriptionInfo(string serviceDescription)
-        {
-            this.serviceDescription = serviceDescription;
-        }
+        public ServiceDescriptionInfo(string serviceDescription) => this.serviceDescription = serviceDescription;
 
         public string ServiceDescription
         {
-            get { return serviceDescription; }
-            set { serviceDescription = value; }
+            get => serviceDescription;
+            set => serviceDescription = value;
         }
     }
 }

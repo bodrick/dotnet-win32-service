@@ -1,5 +1,3 @@
-using System;
-
 namespace MvcTestService.Models
 {
     public class ErrorViewModel

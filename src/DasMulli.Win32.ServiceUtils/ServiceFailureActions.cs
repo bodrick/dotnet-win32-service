@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DasMulli.Win32.ServiceUtils
@@ -10,42 +10,6 @@ namespace DasMulli.Win32.ServiceUtils
     /// </summary>
     public class ServiceFailureActions : IEquatable<ServiceFailureActions>
     {
-        /// <summary>
-        /// Gets the reset period in seconds after which previous failures are cleared.
-        /// For example: When a service fails two times and then doesn't fail for this amount of time, then an
-        /// additional failure is considered a first failure and not a third.
-        /// </summary>
-        /// <value>
-        /// The reset period in seconds after which previous failures are cleared.
-        /// For example: When a service fails two times and then doesn't fail for this amount of time, then an
-        /// additional failure is considered a first failure and not a third.
-        /// </value>
-        public TimeSpan ResetPeriod { get; }
-
-        /// <summary>
-        /// Gets the reboot message used in case a reboot failure action is configured.
-        /// </summary>
-        /// <value>
-        /// The reboot message used in case a reboot failure action is configured.
-        /// </value>
-        public string RebootMessage { get; }
-
-        /// <summary>
-        /// Gets the command run in case a "run command" failure action is configured.
-        /// </summary>
-        /// <value>
-        /// The command run in case a "run command" failure action is configured.
-        /// </value>
-        public string RestartCommand { get; }
-
-        /// <summary>
-        /// Gets the collections of configured failure actions for each successive time the service fails.
-        /// </summary>
-        /// <value>
-        /// The collections of configured failure actions for each successive time the service fails.
-        /// </value>
-        public IReadOnlyCollection<ScAction> Actions { get; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceFailureActions" /> class.
         /// </summary>
@@ -62,29 +26,53 @@ namespace DasMulli.Win32.ServiceUtils
         }
 
         /// <summary>
+        /// Gets the collections of configured failure actions for each successive time the service fails.
+        /// </summary>
+        /// <value>
+        /// The collections of configured failure actions for each successive time the service fails.
+        /// </value>
+        public IReadOnlyCollection<ScAction> Actions { get; }
+
+        /// <summary>
+        /// Gets the reboot message used in case a reboot failure action is configured.
+        /// </summary>
+        /// <value>
+        /// The reboot message used in case a reboot failure action is configured.
+        /// </value>
+        public string RebootMessage { get; }
+
+        /// <summary>
+        /// Gets the reset period in seconds after which previous failures are cleared.
+        /// For example: When a service fails two times and then doesn't fail for this amount of time, then an
+        /// additional failure is considered a first failure and not a third.
+        /// </summary>
+        /// <value>
+        /// The reset period in seconds after which previous failures are cleared.
+        /// For example: When a service fails two times and then doesn't fail for this amount of time, then an
+        /// additional failure is considered a first failure and not a third.
+        /// </value>
+        public TimeSpan ResetPeriod { get; }
+
+        /// <summary>
+        /// Gets the command run in case a "run command" failure action is configured.
+        /// </summary>
+        /// <value>
+        /// The command run in case a "run command" failure action is configured.
+        /// </value>
+        public string RestartCommand { get; }
+
+        /// <summary>
         /// Determines whether the specified <see cref="object"/> is equal to this instance.
         /// </summary>
         /// <param name="obj">The <see cref="object"/> to compare with this instance.</param>
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
             return obj is ServiceFailureActions && Equals((ServiceFailureActions)obj);
-        }
-
-
-        /// <summary>
-        /// Returns a hash code for this instance.
-        /// </summary>
-        /// <returns>
-        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
-        /// </returns>
-        public override int GetHashCode()
-        {
-            return HashCode
-                .Of(this.ResetPeriod)
-                .And(this.RebootMessage)
-                .And(this.RestartCommand)
-                .AndEach(this.Actions);
         }
 
         /// <summary>
@@ -100,7 +88,19 @@ namespace DasMulli.Win32.ServiceUtils
             {
                 return false;
             }
-            return this.GetHashCode() == other.GetHashCode();
+            return GetHashCode() == other.GetHashCode();
         }
+
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+        /// </returns>
+        public override int GetHashCode() => HashCode
+                .Of(ResetPeriod)
+                .And(RebootMessage)
+                .And(RestartCommand)
+                .AndEach(Actions);
     }
 }

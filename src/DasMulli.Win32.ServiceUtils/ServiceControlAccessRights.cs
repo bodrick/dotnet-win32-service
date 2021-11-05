@@ -15,14 +15,14 @@ namespace DasMulli.Win32.ServiceUtils
         Interrogate = 0x00080,
         UserDefinedControl = 0x00100,
 
-        All = Win32AccessMask.StandardRightsRequired 
+        All = Win32AccessMask.StandardRightsRequired
               | QueryConfig
               | ChangeConfig
               | QueryStatus
               | EnumerateDependents
               | Start
               | Stop
-              |  PauseContinue
+              | PauseContinue
               | Interrogate
               | UserDefinedControl
     }
