@@ -9,7 +9,8 @@ namespace DasMulli.Win32.ServiceUtils
 
         [DllImport("AdvApi32", ExactSpelling = true, EntryPoint = "ChangeServiceConfig2W", SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        private static extern bool ChangeServiceConfig2(ServiceHandle service, ServiceConfigInfoTypeLevel infoTypeLevel, IntPtr info);
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool ChangeServiceConfig2(ServiceHandle hService, ServiceConfigInfoTypeLevel dwInfoLevel, IntPtr lpInfo);
 
         [DllImport("AdvApi32", ExactSpelling = true, SetLastError = true, CharSet = CharSet.Unicode)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]

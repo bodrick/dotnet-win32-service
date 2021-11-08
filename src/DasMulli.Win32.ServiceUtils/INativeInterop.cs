@@ -6,7 +6,7 @@ namespace DasMulli.Win32.ServiceUtils
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Keep native entry point name.")]
     internal interface INativeInterop
     {
-        bool ChangeServiceConfig2W(ServiceHandle service, ServiceConfigInfoTypeLevel infoTypeLevel, IntPtr info);
+        bool ChangeServiceConfig2W(ServiceHandle hService, ServiceConfigInfoTypeLevel dwInfoLevel, IntPtr lpInfo);
 
         bool ChangeServiceConfigW(
             ServiceHandle service,

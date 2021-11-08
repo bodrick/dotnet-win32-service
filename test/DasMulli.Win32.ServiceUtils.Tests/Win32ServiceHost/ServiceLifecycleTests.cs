@@ -66,7 +66,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
 
             // Then
             A.CallTo(() => _serviceStateMachine.OnStart(A<string[]>.That.IsSameSequenceAs(TestServiceStartupArguments), A<ServiceStatusReportCallback>.Ignored))
-                .MustHaveHappenedOnceExactly();
+                .MustHaveHappened(Repeated.Exactly.Once);
             _reportedServiceStatuses.Should().Contain(status => status.State == ServiceState.StartPending && status.AcceptedControlCommands == ServiceAcceptedControlCommandsFlags.None);
         }
 

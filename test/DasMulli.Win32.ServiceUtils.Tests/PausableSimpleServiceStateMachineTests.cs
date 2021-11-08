@@ -52,8 +52,8 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             _sut.OnCommand(unsupportedCommand, 0);
 
             // Then no other calls than the startup calls must have been made
-            A.CallTo(_statusReportCallback).MustHaveHappenedOnceOrLess();
-            A.CallTo(_serviceImplementation).MustHaveHappenedOnceOrLess();
+            A.CallTo(_statusReportCallback).MustHaveHappened();
+            A.CallTo(_serviceImplementation).MustHaveHappened();
         }
 
         [Fact]
