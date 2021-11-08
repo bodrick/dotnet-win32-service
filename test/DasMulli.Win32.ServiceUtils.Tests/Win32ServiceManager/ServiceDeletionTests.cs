@@ -25,13 +25,55 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         }
 
         [Fact]
+        public void ItThrowsIfServiceCannotBeDeleted()
+        {
+            // Given
+            GivenTheServiceControlManagerCanBeOpened();
+            var service = GivenTheTestServiceExists();
+            GivenTheServiceCannotBeDeleted(service);
+
+            // When
+            var action = () => _sut.DeleteService(TestServiceName);
+
+            // Then
+            action.Should().Throw<Win32Exception>();
+        }
+
+        [Fact]
+        public void ItThrowsIfServiceControlManagerCannotBeOpened()
+        {
+            // Given
+            GivenTheServiceControlManagerCannotBeOpened();
+
+            // When
+            var action = () => _sut.DeleteService(TestServiceName);
+
+            // Then
+            action.Should().Throw<Win32Exception>();
+        }
+
+        [Fact]
+        public void ItThrowsIfServiceDoesNotExist()
+        {
+            // Given
+            GivenTheServiceControlManagerCanBeOpened();
+            GivenTheTestServiceDoesNotExist();
+
+            // When
+            var action = () => _sut.DeleteService(TestServiceName);
+
+            // Then
+            action.Should().Throw<Win32Exception>();
+        }
+
+        [Fact]
         public void ItThrowsPlatformNotSupportedWhenApiSetDllsAreMissing()
         {
             // Given
             A.CallTo(_nativeInterop).Throws<DllNotFoundException>();
 
             // When
-            Action action = () => _sut.DeleteService(TestServiceName);
+            var action = () => _sut.DeleteService(TestServiceName);
 
             // Then
             action.Should().Throw<PlatformNotSupportedException>();
@@ -63,7 +105,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
                 .Returns(_serviceControlManager);
         }
 
-        private void GivenTheServiceControlManagerCannotBeOpenend()
+        private void GivenTheServiceControlManagerCannotBeOpened()
         {
             A.CallTo(() => _serviceControlManager.IsInvalid).Returns(value: true);
             A.CallTo(() => _nativeInterop.OpenSCManagerW(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
@@ -85,48 +127,6 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             A.CallTo(() => _nativeInterop.OpenServiceW(_serviceControlManager, TestServiceName, A<ServiceControlAccessRights>._))
                 .Returns(svc);
             return svc;
-        }
-
-        [Fact]
-        private void ItThrowsIfServiceCannotBeDeleted()
-        {
-            // Given
-            GivenTheServiceControlManagerCanBeOpened();
-            var service = GivenTheTestServiceExists();
-            GivenTheServiceCannotBeDeleted(service);
-
-            // When
-            Action action = () => _sut.DeleteService(TestServiceName);
-
-            // Then
-            action.Should().Throw<Win32Exception>();
-        }
-
-        [Fact]
-        private void ItThrowsIfServiceControlManagerCannotBeOpened()
-        {
-            // Given
-            GivenTheServiceControlManagerCannotBeOpenend();
-
-            // When
-            Action action = () => _sut.DeleteService(TestServiceName);
-
-            // Then
-            action.Should().Throw<Win32Exception>();
-        }
-
-        [Fact]
-        private void ItThrowsIfServiceDoesNotExist()
-        {
-            // Given
-            GivenTheServiceControlManagerCanBeOpened();
-            GivenTheTestServiceDoesNotExist();
-
-            // When
-            Action action = () => _sut.DeleteService(TestServiceName);
-
-            // Then
-            action.Should().Throw<Win32Exception>();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using JetBrains.Annotations;
 
 namespace DasMulli.Win32.ServiceUtils
@@ -8,7 +8,7 @@ namespace DasMulli.Win32.ServiceUtils
     /// </summary>
     [Flags]
     [PublicAPI]
-    public enum ServiceAcceptedControlCommandsFlags : uint
+    public enum ServiceAcceptedControlCommands : uint
     {
         /// <summary>
         /// No command is accepted. Usually used during StartPending/StopPending/PausePending states.

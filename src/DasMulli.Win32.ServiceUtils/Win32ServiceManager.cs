@@ -7,9 +7,9 @@ namespace DasMulli.Win32.ServiceUtils
     /// </summary>
     public sealed class Win32ServiceManager
     {
-        private readonly string databaseName;
-        private readonly string machineName;
-        private readonly INativeInterop nativeInterop;
+        private readonly string? _databaseName;
+        private readonly string? _machineName;
+        private readonly INativeInterop _nativeInterop;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Win32ServiceManager"/> class that
@@ -17,16 +17,15 @@ namespace DasMulli.Win32.ServiceUtils
         /// </summary>
         /// <param name="machineName">The name of the machine to manage.</param>
         /// <param name="databaseName">The name of the database to manage.</param>
-        public Win32ServiceManager(string machineName = null, string databaseName = null)
-            : this(machineName, databaseName, Win32Interop.Wrapper)
+        public Win32ServiceManager(string? machineName = null, string? databaseName = null) : this(machineName, databaseName, Win32Interop.Wrapper)
         {
         }
 
-        internal Win32ServiceManager(string machineName, string databaseName, INativeInterop nativeInterop)
+        internal Win32ServiceManager(string? machineName, string? databaseName, INativeInterop nativeInterop)
         {
-            this.machineName = machineName;
-            this.databaseName = databaseName;
-            this.nativeInterop = nativeInterop;
+            _machineName = machineName;
+            _databaseName = databaseName;
+            _nativeInterop = nativeInterop;
         }
 
         /// <summary>
@@ -52,25 +51,23 @@ namespace DasMulli.Win32.ServiceUtils
 
             try
             {
-                using (var mgr = ServiceControlManager.Connect(nativeInterop, machineName, databaseName, ServiceControlManagerAccessRights.All))
+                using var mgr = ServiceControlManager.Connect(_nativeInterop, _machineName, _databaseName, ServiceControlManagerAccessRights.All);
+                if (mgr.TryOpenService(serviceDefinition.ServiceName, ServiceControlAccessRights.All, out var existingService, out var errorException))
                 {
-                    if (mgr.TryOpenService(serviceDefinition.ServiceName, ServiceControlAccessRights.All, out var existingService, out var errorException))
+                    using (existingService)
                     {
-                        using (existingService)
-                        {
-                            DoUpdateService(existingService, serviceDefinition, startImmediately);
-                        }
+                        DoUpdateService(existingService, serviceDefinition, startImmediately);
+                    }
+                }
+                else
+                {
+                    if (errorException.NativeErrorCode == KnownWin32ErrorCodes.ERROR_SERVICE_DOES_NOT_EXIST)
+                    {
+                        DoCreateService(mgr, serviceDefinition, startImmediately);
                     }
                     else
                     {
-                        if (errorException.NativeErrorCode == KnownWin32ErrorCodes.ERROR_SERVICE_DOES_NOT_EXIST)
-                        {
-                            DoCreateService(mgr, serviceDefinition, startImmediately);
-                        }
-                        else
-                        {
-                            throw errorException;
-                        }
+                        throw errorException;
                     }
                 }
             }
@@ -79,35 +76,6 @@ namespace DasMulli.Win32.ServiceUtils
                 throw new PlatformNotSupportedException(nameof(Win32ServiceHost) + " is only supported on Windows with service management API set.", dllException);
             }
         }
-
-        /// <summary>
-        /// Creates a new Windows service.
-        /// </summary>
-        /// <param name="serviceName">The name of the service.</param>
-        /// <param name="displayName">The display name of the service.</param>
-        /// <param name="description">The description of the service.</param>
-        /// <param name="binaryPath">The path to the binary to use as Windows service including arguments.</param>
-        /// <param name="credentials">The credentials used to run the service with.</param>
-        /// <param name="autoStart">If set to <see langword="true"/>, the service will start automatically during boot.</param>
-        /// <param name="startImmediately">If set to <see langword="true"/>, the service will be started immediately after registering.</param>
-        /// <param name="errorSeverity">The error severity of the service.</param>
-        /// <exception cref="ArgumentException">
-        /// Thrown when <paramref name="binaryPath"/> is null or empty or <paramref name="serviceName"/> is null or empty.
-        /// </exception>
-        /// <exception cref="PlatformNotSupportedException">Thrown when run on a non-Windows platform.</exception>
-        [Obsolete("Use the CreateService() overload taking a ServiceDefinition argument instead. This method only exists for backwards compatibility.")]
-        public void CreateService(string serviceName, string displayName, string description, string binaryPath, Win32ServiceCredentials credentials,
-            bool autoStart = false, bool startImmediately = false, ErrorSeverity errorSeverity = ErrorSeverity.Normal) => CreateService(
-                new ServiceDefinitionBuilder(serviceName)
-                    .WithDisplayName(displayName)
-                    .WithDescription(description)
-                    .WithBinaryPath(binaryPath)
-                    .WithCredentials(credentials)
-                    .WithAutoStart(autoStart)
-                    .WithErrorSeverity(errorSeverity)
-                    .Build(),
-                startImmediately
-            );
 
         /// <summary>
         /// Creates a new Windows service.
@@ -131,10 +99,8 @@ namespace DasMulli.Win32.ServiceUtils
 
             try
             {
-                using (var mgr = ServiceControlManager.Connect(nativeInterop, machineName, databaseName, ServiceControlManagerAccessRights.All))
-                {
-                    DoCreateService(mgr, serviceDefinition, startImmediately);
-                }
+                using var mgr = ServiceControlManager.Connect(_nativeInterop, _machineName, _databaseName, ServiceControlManagerAccessRights.All);
+                DoCreateService(mgr, serviceDefinition, startImmediately);
             }
             catch (DllNotFoundException dllException)
             {
@@ -157,17 +123,40 @@ namespace DasMulli.Win32.ServiceUtils
 
             try
             {
-                using (var mgr = ServiceControlManager.Connect(nativeInterop, machineName, databaseName, ServiceControlManagerAccessRights.All))
-                {
-                    using (var svc = mgr.OpenService(serviceName, ServiceControlAccessRights.All))
-                    {
-                        svc.Delete();
-                    }
-                }
+                using var mgr = ServiceControlManager.Connect(_nativeInterop, _machineName, _databaseName, ServiceControlManagerAccessRights.All);
+                using var svc = mgr.OpenService(serviceName, ServiceControlAccessRights.All);
+                svc.Delete();
             }
             catch (DllNotFoundException dllException)
             {
                 throw new PlatformNotSupportedException(nameof(Win32ServiceHost) + " is only supported on Windows with service management API set.", dllException);
+            }
+        }
+
+        private static void DoCreateService(ServiceControlManager serviceControlManager, ServiceDefinition serviceDefinition, bool startImmediately)
+        {
+            using var svc = serviceControlManager.CreateService(serviceDefinition.ServiceName, serviceDefinition.DisplayName, serviceDefinition.BinaryPath, ServiceType.Win32OwnProcess,
+                serviceDefinition.AutoStart ? ServiceStartType.AutoStart : ServiceStartType.StartOnDemand, serviceDefinition.ErrorSeverity, serviceDefinition.Credentials);
+
+            if (!string.IsNullOrEmpty(serviceDefinition.Description))
+            {
+                svc.SetDescription(serviceDefinition.Description);
+            }
+
+            if (serviceDefinition.FailureActions != null)
+            {
+                svc.SetFailureActions(serviceDefinition.FailureActions);
+                svc.SetFailureActionFlag(serviceDefinition.FailureActionsOnNonCrashFailures);
+            }
+
+            if (serviceDefinition.AutoStart && serviceDefinition.DelayedAutoStart)
+            {
+                svc.SetDelayedAutoStartFlag(true);
+            }
+
+            if (startImmediately)
+            {
+                svc.Start();
             }
         }
 
@@ -182,37 +171,7 @@ namespace DasMulli.Win32.ServiceUtils
             existingService.SetDelayedAutoStartFlag(serviceDefinition.AutoStart && serviceDefinition.DelayedAutoStart);
             if (startIfNotRunning)
             {
-                existingService.Start(throwIfAlreadyRunning: false);
-            }
-        }
-
-        private void DoCreateService(ServiceControlManager serviceControlManager, ServiceDefinition serviceDefinition, bool startImmediately)
-        {
-            using (var svc = serviceControlManager.CreateService(serviceDefinition.ServiceName, serviceDefinition.DisplayName, serviceDefinition.BinaryPath, ServiceType.Win32OwnProcess,
-                    serviceDefinition.AutoStart ? ServiceStartType.AutoStart : ServiceStartType.StartOnDemand, serviceDefinition.ErrorSeverity, serviceDefinition.Credentials))
-            {
-                var description = serviceDefinition.Description;
-                if (!string.IsNullOrEmpty(description))
-                {
-                    svc.SetDescription(description);
-                }
-
-                var serviceFailureActions = serviceDefinition.FailureActions;
-                if (serviceFailureActions != null)
-                {
-                    svc.SetFailureActions(serviceFailureActions);
-                    svc.SetFailureActionFlag(serviceDefinition.FailureActionsOnNonCrashFailures);
-                }
-
-                if (serviceDefinition.AutoStart && serviceDefinition.DelayedAutoStart)
-                {
-                    svc.SetDelayedAutoStartFlag(true);
-                }
-
-                if (startImmediately)
-                {
-                    svc.Start();
-                }
+                existingService.Start(false);
             }
         }
     }

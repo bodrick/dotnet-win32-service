@@ -9,14 +9,14 @@ namespace DasMulli.Win32.ServiceUtils
     /// <seealso cref="IWin32ServiceStateMachine" />
     public sealed class SimpleServiceStateMachine : IWin32ServiceStateMachine
     {
-        private readonly IWin32Service serviceImplementation;
-        private ServiceStatusReportCallback statusReportCallback;
+        private readonly IWin32Service _serviceImplementation;
+        private ServiceStatusReportCallback? _statusReportCallback;
 
         /// <summary>
         /// Initializes a new <see cref="SimpleServiceStateMachine"/> to run the specified service.
         /// </summary>
         /// <param name="serviceImplementation">The service implementation.</param>
-        public SimpleServiceStateMachine(IWin32Service serviceImplementation) => this.serviceImplementation = serviceImplementation;
+        public SimpleServiceStateMachine(IWin32Service serviceImplementation) => _serviceImplementation = serviceImplementation;
 
         /// <summary>
         /// Called by the service host when a command was received from Windows' service system.
@@ -27,20 +27,20 @@ namespace DasMulli.Win32.ServiceUtils
         {
             if (command == ServiceControlCommand.Stop)
             {
-                statusReportCallback(ServiceState.StopPending, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 3000);
+                _statusReportCallback?.Invoke(ServiceState.StopPending, ServiceAcceptedControlCommands.None, 0, 3000);
 
                 var win32ExitCode = 0;
 
                 try
                 {
-                    serviceImplementation.Stop();
+                    _serviceImplementation.Stop();
                 }
                 catch
                 {
                     win32ExitCode = -1;
                 }
 
-                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode, waitHint: 0);
+                _statusReportCallback?.Invoke(ServiceState.Stopped, ServiceAcceptedControlCommands.None, win32ExitCode, 0);
             }
         }
 
@@ -55,20 +55,20 @@ namespace DasMulli.Win32.ServiceUtils
         [SuppressMessage("ReSharper", "ParameterHidesMember")]
         public void OnStart(string[] startupArguments, ServiceStatusReportCallback statusReportCallback)
         {
-            this.statusReportCallback = statusReportCallback;
+            _statusReportCallback = statusReportCallback;
 
             try
             {
-                serviceImplementation.Start(startupArguments, HandleServiceImplementationStoppedOnItsOwn);
+                _serviceImplementation.Start(startupArguments, HandleServiceImplementationStoppedOnItsOwn);
 
-                statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.Stop, win32ExitCode: 0, waitHint: 0);
+                statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommands.Stop, 0, 0);
             }
             catch
             {
-                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: -1, waitHint: 0);
+                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommands.None, -1, 0);
             }
         }
 
-        private void HandleServiceImplementationStoppedOnItsOwn() => statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
+        private void HandleServiceImplementationStoppedOnItsOwn() => _statusReportCallback?.Invoke(ServiceState.Stopped, ServiceAcceptedControlCommands.None, 0, 0);
     }
 }

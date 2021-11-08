@@ -1,4 +1,4 @@
-﻿namespace DasMulli.Win32.ServiceUtils
+namespace DasMulli.Win32.ServiceUtils
 {
     /// <summary>
     /// Callback type that is used to allow implementations of <see cref="IWin32Service"/> to notify
@@ -22,7 +22,7 @@
         /// </summary>
         /// <param name="startupArguments">The startup arguments.</param>
         /// <param name="serviceStoppedCallback">Notifies the service manager that the service stopped without being requested to stop.</param>
-        void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback);
+        void Start(string[]? startupArguments, ServiceStoppedCallback? serviceStoppedCallback);
 
         /// <summary>
         /// Called by the service host to stop the service.

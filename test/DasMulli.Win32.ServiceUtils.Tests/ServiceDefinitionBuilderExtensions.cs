@@ -3,7 +3,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
     internal static class ServiceDefinitionBuilderExtensions
     {
         public static ServiceDefinition BuildNonValidating(this ServiceDefinitionBuilder builder) =>
-            new(builder.ServiceName, builder.BinaryPath)
+            new(builder.ServiceName!, builder.BinaryPath)
             {
                 DisplayName = builder.DisplayName,
                 Description = builder.Description,

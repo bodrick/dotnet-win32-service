@@ -9,48 +9,48 @@ namespace DasMulli.Win32.ServiceUtils
         bool ChangeServiceConfig2W(ServiceHandle hService, ServiceConfigInfoTypeLevel dwInfoLevel, IntPtr lpInfo);
 
         bool ChangeServiceConfigW(
-            ServiceHandle service,
-            ServiceType serviceType,
-            ServiceStartType startType,
-            ErrorSeverity errorSeverity,
-            string binaryPath,
-            string loadOrderGroup,
-            IntPtr outUIntTagId,
-            string dependencies,
-            string serviceUserName,
-            string servicePassword,
-            string displayName);
+            ServiceHandle hService,
+            ServiceType nServiceType,
+            ServiceStartType nStartType,
+            ErrorSeverity nErrorControl,
+            string? lpBinaryPathName,
+            string? lpLoadOrderGroup,
+            IntPtr lpdwTagId,
+            string? lpDependencies,
+            string? lpServiceStartName,
+            string? lpPassword,
+            string? lpDisplayName);
 
-        bool CloseServiceHandle(IntPtr handle);
+        bool CloseServiceHandle(IntPtr hSCObject);
 
         ServiceHandle CreateServiceW(
-            ServiceControlManager serviceControlManager,
-            string serviceName,
-            string displayName,
-            ServiceControlAccessRights desiredControlAccess,
-            ServiceType serviceType,
-            ServiceStartType startType,
-            ErrorSeverity errorSeverity,
-            string binaryPath,
-            string loadOrderGroup,
-            IntPtr outUIntTagId,
-            string dependencies,
-            string serviceUserName,
-            string servicePassword);
+            ServiceControlManager hSCManager,
+            string lpServiceName,
+            string? lpDisplayName,
+            ServiceControlAccessRights dwDesiredAccess,
+            ServiceType dwServiceType,
+            ServiceStartType dwStartType,
+            ErrorSeverity dwErrorControl,
+            string? lpBinaryPathName,
+            string? lpLoadOrderGroup,
+            IntPtr lpdwTagId,
+            string? lpDependencies,
+            string? lpServiceStartName,
+            string? lpPassword);
 
-        bool DeleteService(ServiceHandle service);
+        bool DeleteService(ServiceHandle hService);
 
-        ServiceControlManager OpenSCManagerW(string machineName, string databaseName, ServiceControlManagerAccessRights dwAccess);
+        ServiceControlManager OpenSCManagerW(string? lpMachineName, string? lpDatabaseName, ServiceControlManagerAccessRights dwDesiredAccess);
 
-        ServiceHandle OpenServiceW(ServiceControlManager serviceControlManager, string serviceName, ServiceControlAccessRights desiredControlAccess);
+        ServiceHandle OpenServiceW(ServiceControlManager hSCManager, string lpServiceName, ServiceControlAccessRights dwDesiredAccess);
 
-        ServiceStatusHandle RegisterServiceCtrlHandlerExW(string serviceName, ServiceControlHandler serviceControlHandler, IntPtr context);
+        ServiceStatusHandle RegisterServiceCtrlHandlerExW(string lpServiceName, ServiceControlHandler lpHandlerProc, IntPtr lpContext);
 
         [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global", Justification = "Matches native signature.")]
-        bool SetServiceStatus(ServiceStatusHandle statusHandle, ref ServiceStatus pServiceStatus);
+        bool SetServiceStatus(ServiceStatusHandle hServiceStatus, ref ServiceStatus lpServiceStatus);
 
-        bool StartServiceCtrlDispatcherW(ServiceTableEntry[] serviceTable);
+        bool StartServiceCtrlDispatcherW(ServiceTableEntry[] lpServiceStartTable);
 
-        bool StartServiceW(ServiceHandle service, uint argc, IntPtr wargv);
+        bool StartServiceW(ServiceHandle hService, uint dwNumServiceArgs, string[]? lpServiceArgVectors);
     }
 }

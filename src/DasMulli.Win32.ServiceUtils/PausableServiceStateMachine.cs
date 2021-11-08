@@ -11,7 +11,7 @@ namespace DasMulli.Win32.ServiceUtils
     public sealed class PausableServiceStateMachine : IWin32ServiceStateMachine
     {
         private readonly IPausableWin32Service _serviceImplementation;
-        private ServiceStatusReportCallback _statusReportCallback;
+        private ServiceStatusReportCallback? _statusReportCallback;
 
         /// <summary>
         /// Initializes a new <see cref="PausableServiceStateMachine"/> to run the specified service.
@@ -31,17 +31,17 @@ namespace DasMulli.Win32.ServiceUtils
             switch (command)
             {
                 case ServiceControlCommand.Stop:
-                    PerformAction(ServiceState.StopPending, ServiceState.Stopped, _serviceImplementation.Stop, ServiceAcceptedControlCommandsFlags.None);
+                    PerformAction(ServiceState.StopPending, ServiceState.Stopped, _serviceImplementation.Stop, ServiceAcceptedControlCommands.None);
                     break;
 
                 case ServiceControlCommand.Pause:
                     PerformAction(ServiceState.PausePending, ServiceState.Paused, _serviceImplementation.Pause,
-                        ServiceAcceptedControlCommandsFlags.PauseContinueStop);
+                        ServiceAcceptedControlCommands.PauseContinueStop);
                     break;
 
                 case ServiceControlCommand.Continue:
                     PerformAction(ServiceState.ContinuePending, ServiceState.Running, _serviceImplementation.Continue,
-                        ServiceAcceptedControlCommandsFlags.PauseContinueStop);
+                        ServiceAcceptedControlCommands.PauseContinueStop);
                     break;
             }
         }
@@ -63,29 +63,28 @@ namespace DasMulli.Win32.ServiceUtils
             {
                 _serviceImplementation.Start(startupArguments, HandleServiceImplementationStoppedOnItsOwn);
 
-                statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, win32ExitCode: 0, waitHint: 0);
+                statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommands.PauseContinueStop, 0, 0);
             }
             catch
             {
-                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: -1, waitHint: 0);
+                statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommands.None, -1, 0);
             }
         }
 
-        private void HandleServiceImplementationStoppedOnItsOwn() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 0);
+        private void HandleServiceImplementationStoppedOnItsOwn() => _statusReportCallback?.Invoke(ServiceState.Stopped, ServiceAcceptedControlCommands.None, 0, 0);
 
-        private void PerformAction(ServiceState pendingState, ServiceState completedState, Action serviceAction,
-            ServiceAcceptedControlCommandsFlags allowedControlCommandsFlags)
+        private void PerformAction(ServiceState pendingState, ServiceState completedState, Action serviceAction, ServiceAcceptedControlCommands allowedControlCommandsFlags)
         {
-            _statusReportCallback(pendingState, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 0, waitHint: 3000);
+            _statusReportCallback?.Invoke(pendingState, ServiceAcceptedControlCommands.None, 0, 3000);
 
             try
             {
                 serviceAction();
-                _statusReportCallback(completedState, allowedControlCommandsFlags, 0, waitHint: 0);
+                _statusReportCallback?.Invoke(completedState, allowedControlCommandsFlags, 0, 0);
             }
             catch
             {
-                _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, waitHint: 0);
+                _statusReportCallback?.Invoke(ServiceState.Stopped, ServiceAcceptedControlCommands.None, -1, 0);
             }
         }
     }

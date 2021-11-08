@@ -21,7 +21,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
 
         private static readonly ServiceFailureActions TestServiceFailureActions = new(TimeSpan.FromDays(1), "A reboot message",
             "A restart Command",
-            new List<ScAction>()
+            new List<ScAction>
             {
                 new() { Delay = TimeSpan.FromSeconds(10), Type = ScActionType.ScActionRestart },
                 new() { Delay = TimeSpan.FromSeconds(30), Type = ScActionType.ScActionRestart },
@@ -48,10 +48,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         public void ItCanStartAServiceAfterChangingIt()
         {
             // Given
-            var existingService = GivenAServiceExists(TestServiceName, canBeUpdated: true);
+            var existingService = GivenAServiceExists(TestServiceName, true);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: true);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), true);
 
             // Then
             A.CallTo(() => existingService.Start(false)).MustHaveHappened();
@@ -61,11 +61,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         public void ItThrowsIfDescriptionCannotBeSet()
         {
             // Given
-            var existingService = GivenAServiceExists(TestServiceName, canBeUpdated: true);
+            var existingService = GivenAServiceExists(TestServiceName, true);
             GivenTheDescriptionOfAServiceCannotBeUpdated(existingService);
 
             // When
-            Action action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: true);
+            var action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), true);
 
             // Then
             action.Should().Throw<Win32Exception>();
@@ -75,10 +75,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         public void ItThrowsIfServiceCannotBeUpdated()
         {
             // Given
-            GivenAServiceExists(TestServiceName, canBeUpdated: false);
+            GivenAServiceExists(TestServiceName, false);
 
             // When
-            Action action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: true);
+            var action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), true);
 
             // Then
             action.Should().Throw<Win32Exception>();
@@ -92,12 +92,12 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         public void ItUpdatesDelayedAutoStartFlag(bool autoStart, bool delayedAutoStartFlag, bool expectedSetFlag)
         {
             // Given
-            GivenAServiceExists(TestServiceName, canBeUpdated: true);
+            GivenAServiceExists(TestServiceName, true);
 
             // When
             WhenATestServiceIsCreatedOrUpdated(
                 CreateTestServiceDefinitionBuilder().WithAutoStart(autoStart).WithDelayedAutoStart(delayedAutoStartFlag).Build(),
-                startImmediately: false);
+                false);
 
             // then
             _delayedAutoStartInfoSetOnNativeInterop.Should().Be(expectedSetFlag);
@@ -109,11 +109,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         internal void ItCanUpdateAnExistingService(bool autoStart, ServiceStartType serviceStartType)
         {
             // Given
-            var existingService = GivenAServiceExists(TestServiceName, canBeUpdated: true);
+            var existingService = GivenAServiceExists(TestServiceName, true);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithAutoStart(autoStart).Build(),
-                startImmediately: true);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithAutoStart(autoStart).Build(), true);
 
             // Then
             ThenTheServiceHasBeenUpdated(existingService, serviceStartType);
@@ -123,11 +122,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         internal void ItChangesServiceFailureActionsIfTheyAreNull()
         {
             // Given
-            var existingService = GivenAServiceExists(TestServiceName, canBeUpdated: true);
+            var existingService = GivenAServiceExists(TestServiceName, true);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithFailureActions(null).Build(),
-                startImmediately: true);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithFailureActions(null).Build(), true);
 
             // Then
             A.CallTo(() => existingService.SetFailureActions(null)).MustHaveHappened();
@@ -137,11 +135,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         internal void ItDoesSetServiceFailureActionsFlagIfItIsSpecified()
         {
             // Given
-            var existingService = GivenAServiceExists(TestServiceName, canBeUpdated: true);
+            var existingService = GivenAServiceExists(TestServiceName, true);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithFailureActionsOnNonCrashFailures(true).Build(),
-                startImmediately: true);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithFailureActionsOnNonCrashFailures(true).Build(), true);
 
             // Then
             A.CallTo(() => existingService.SetFailureActions(TestServiceFailureActions)).MustHaveHappened();
@@ -168,11 +165,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
 
             A.CallTo(() => serviceHandle.IsInvalid).Returns(value: false);
 
-            ServiceHandle dummyServiceHandle;
-            Win32Exception dummyWin32Exception;
+            ServiceHandle? dummyServiceHandle;
+            Win32Exception? dummyWin32Exception;
             A.CallTo(() =>
-                    _serviceControlManager.TryOpenService(serviceName, A<ServiceControlAccessRights>._, out dummyServiceHandle,
-                        out dummyWin32Exception))
+                    _serviceControlManager.TryOpenService(serviceName, A<ServiceControlAccessRights>._, out dummyServiceHandle, out dummyWin32Exception))
                 .Returns(value: true)
                 .AssignsOutAndRefParameters(serviceHandle, null);
 
@@ -209,7 +205,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
                         return true;
                     });
 
-                A.CallTo(() => _nativeInterop.StartServiceW(serviceHandle, A<uint>._, A<IntPtr>._))
+                A.CallTo(() => _nativeInterop.StartServiceW(serviceHandle, A<uint>._, A<string[]>._))
                     .Returns(value: true);
             }
 
@@ -217,7 +213,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         }
 
         private void GivenTheDescriptionOfAServiceCannotBeUpdated(ServiceHandle existingService) => A.CallTo(() =>
-                _nativeInterop.ChangeServiceConfig2W(existingService, ServiceConfigInfoTypeLevel.ServiceDescription, A<IntPtr>._))
+                    _nativeInterop.ChangeServiceConfig2W(existingService, ServiceConfigInfoTypeLevel.ServiceDescription, A<IntPtr>._))
             .Returns(value: false);
 
         private void GivenTheServiceControlManagerCanBeOpened()

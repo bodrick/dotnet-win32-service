@@ -15,7 +15,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
         // subject under test
         private readonly IWin32ServiceStateMachine _sut;
 
-        private ServiceStoppedCallback _serviceStoppedCallbackPassedToImplementation;
+        private ServiceStoppedCallback? _serviceStoppedCallbackPassedToImplementation;
 
         public PausableServiceStateMachineTests() => _sut = new PausableServiceStateMachine(_serviceImplementation);
 
@@ -39,7 +39,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
 
             // Then
             A.CallTo(() => _serviceImplementation.Continue()).MustHaveHappened();
-            A.CallTo(() => _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommands.PauseContinueStop, 0, 0)).MustHaveHappened();
         }
 
         [Theory, MemberData(nameof(UnsupportedCommandExamples))]
@@ -67,7 +67,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
 
             // Then
             A.CallTo(() => _serviceImplementation.Pause()).MustHaveHappened();
-            A.CallTo(() => _statusReportCallback(ServiceState.Paused, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Paused, ServiceAcceptedControlCommands.PauseContinueStop, 0, 0)).MustHaveHappened();
         }
 
         [Fact]
@@ -81,7 +81,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             _sut.OnCommand(ServiceControlCommand.Stop, 0);
 
             // Then
-            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, 0))
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommands.None, -1, 0))
                 .MustHaveHappened();
         }
 
@@ -95,7 +95,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             _sut.OnStart(TestStartupArguments, _statusReportCallback);
 
             // Then
-            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, -1, 0))
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommands.None, -1, 0))
                 .MustHaveHappened();
         }
 
@@ -106,10 +106,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests
             GivenTheServiceHasBeenStarted();
 
             // When the stopped callback is invoked
-            _serviceStoppedCallbackPassedToImplementation();
+            _serviceStoppedCallbackPassedToImplementation?.Invoke();
 
             // Then
-            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, 0, 0))
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommands.None, 0, 0))
                 .MustHaveHappened();
         }
 
@@ -121,7 +121,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
 
             // Then
             A.CallTo(() => _serviceImplementation.Start(TestStartupArguments, A<ServiceStoppedCallback>._)).MustHaveHappened();
-            A.CallTo(() => _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.PauseContinueStop, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommands.PauseContinueStop, 0, 0)).MustHaveHappened();
         }
 
         [Fact]
@@ -135,7 +135,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests
 
             // Then
             A.CallTo(() => _serviceImplementation.Stop()).MustHaveHappened();
-            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, 0, 0)).MustHaveHappened();
+            A.CallTo(() => _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommands.None, 0, 0)).MustHaveHappened();
         }
 
         private void GivenTheServiceHasBeenStarted()

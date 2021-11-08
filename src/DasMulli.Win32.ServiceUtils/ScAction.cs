@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
@@ -8,7 +8,7 @@ namespace DasMulli.Win32.ServiceUtils
     /// <summary>
     /// Service control actions used to specify what to do in case of service failures.
     /// </summary>
-    /// <seealso cref="System.IEquatable{T}" />
+    /// <seealso cref="IEquatable{T}" />
     [StructLayout(LayoutKind.Sequential)]
     [SuppressMessage("ReSharper", "ConvertToAutoProperty", Justification = "Keep fields to preserve explicit struct layout for marshalling.")]
     [PublicAPI]
@@ -51,14 +51,14 @@ namespace DasMulli.Win32.ServiceUtils
         /// Determines whether the specified <see cref="object"/> is equal to this instance.
         /// </summary>
         /// <param name="obj">The <see cref="object"/> to compare with this instance.</param>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is null)
             {
                 return false;
             }
 
-            return obj is ScAction && Equals((ScAction)obj);
+            return obj is ScAction action && Equals(action);
         }
 
         /// <summary>
@@ -67,8 +67,10 @@ namespace DasMulli.Win32.ServiceUtils
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
-        public override int GetHashCode() => HashCode
-                .Of(Delay)
-                .And(Type);
+        public override int GetHashCode() => HashCode.Combine(Delay, Type);
+
+        public static bool operator ==(ScAction left, ScAction right) => left.Equals(right);
+
+        public static bool operator !=(ScAction left, ScAction right) => !(left == right);
     }
 }

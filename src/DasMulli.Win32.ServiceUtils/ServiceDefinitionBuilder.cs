@@ -75,7 +75,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// This includes the path to the executable as well as the
         /// arguments to be passed to it.
         /// </value>
-        public string BinaryPath { get; set; }
+        public string? BinaryPath { get; set; }
 
         /// <summary>
         /// Gets or sets the credentials for the account the service shall run as.
@@ -97,7 +97,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The service description.
         /// </value>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets or sets the display name of the service.
@@ -105,7 +105,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The display name of the service.
         /// </value>
-        public string DisplayName { get; set; }
+        public string? DisplayName { get; set; }
 
         /// <summary>
         /// Gets or sets the error severity of service failures.
@@ -121,7 +121,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The failure actions of the service.
         /// </value>
-        public ServiceFailureActions FailureActions { get; set; }
+        public ServiceFailureActions? FailureActions { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the failure actions will be triggered
@@ -143,7 +143,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The name of the service.
         /// </value>
-        public string ServiceName { get; set; }
+        public string? ServiceName { get; set; }
 
         /// <summary>
         /// Builds a new instance of <see cref="ServiceDefinition"/> using the configured values.
@@ -157,6 +157,11 @@ namespace DasMulli.Win32.ServiceUtils
             if (string.IsNullOrEmpty(ServiceName))
             {
                 throw new InvalidOperationException($"Cannot create a ServiceDefinition when {nameof(ServiceName)} is not set to a non-empty string");
+            }
+
+            if (string.IsNullOrEmpty(DisplayName))
+            {
+                throw new InvalidOperationException($"Cannot create a ServiceDefinition when {nameof(DisplayName)} is not set to a non-empty string");
             }
 
             if (string.IsNullOrEmpty(BinaryPath))
@@ -201,7 +206,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// arguments to be passed to it.
         /// </param>
         /// <returns>Returns the current instance</returns>
-        public ServiceDefinitionBuilder WithBinaryPath(string binaryPath)
+        public ServiceDefinitionBuilder WithBinaryPath(string? binaryPath)
         {
             BinaryPath = binaryPath;
             return this;
@@ -271,7 +276,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// </summary>
         /// <param name="failureActions">The new failure actions of the service.</param>
         /// <returns>Returns the current instance</returns>
-        public ServiceDefinitionBuilder WithFailureActions(ServiceFailureActions failureActions)
+        public ServiceDefinitionBuilder WithFailureActions(ServiceFailureActions? failureActions)
         {
             FailureActions = failureActions;
             return this;
@@ -298,7 +303,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// </summary>
         /// <param name="serviceName">New name of the service.</param>
         /// <returns>Returns the current instance</returns>
-        public ServiceDefinitionBuilder WithServiceName(string serviceName)
+        public ServiceDefinitionBuilder WithServiceName(string? serviceName)
         {
             ServiceName = serviceName;
             return this;

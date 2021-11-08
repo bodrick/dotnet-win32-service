@@ -17,7 +17,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <param name="rebootMessage">The reboot message used in case a reboot failure action is contained in <paramref name="actions"/>.</param>
         /// <param name="restartCommand">The command run in case a "run command" failure action is contained in <paramref name="actions"/>.</param>
         /// <param name="actions">The failure actions.</param>
-        public ServiceFailureActions(TimeSpan resetPeriod, string rebootMessage, string restartCommand, IReadOnlyCollection<ScAction> actions)
+        public ServiceFailureActions(TimeSpan resetPeriod, string? rebootMessage, string? restartCommand, IReadOnlyCollection<ScAction>? actions)
         {
             ResetPeriod = resetPeriod;
             RebootMessage = rebootMessage;
@@ -31,7 +31,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The collections of configured failure actions for each successive time the service fails.
         /// </value>
-        public IReadOnlyCollection<ScAction> Actions { get; }
+        public IReadOnlyCollection<ScAction>? Actions { get; }
 
         /// <summary>
         /// Gets the reboot message used in case a reboot failure action is configured.
@@ -39,7 +39,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The reboot message used in case a reboot failure action is configured.
         /// </value>
-        public string RebootMessage { get; }
+        public string? RebootMessage { get; }
 
         /// <summary>
         /// Gets the reset period in seconds after which previous failures are cleared.
@@ -59,20 +59,20 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The command run in case a "run command" failure action is configured.
         /// </value>
-        public string RestartCommand { get; }
+        public string? RestartCommand { get; }
 
         /// <summary>
         /// Determines whether the specified <see cref="object"/> is equal to this instance.
         /// </summary>
         /// <param name="obj">The <see cref="object"/> to compare with this instance.</param>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is null)
             {
                 return false;
             }
 
-            return obj is ServiceFailureActions && Equals((ServiceFailureActions)obj);
+            return obj is ServiceFailureActions actions && Equals(actions);
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <returns>
         /// true if the current object is equal to the <paramref name="other">other</paramref> parameter; otherwise, false.
         /// </returns>
-        public bool Equals(ServiceFailureActions other)
+        public bool Equals(ServiceFailureActions? other)
         {
             if (other == null)
             {
@@ -97,10 +97,21 @@ namespace DasMulli.Win32.ServiceUtils
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
-        public override int GetHashCode() => HashCode
-                .Of(ResetPeriod)
-                .And(RebootMessage)
-                .And(RestartCommand)
-                .AndEach(Actions);
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(ResetPeriod);
+            hash.Add(RebootMessage);
+            hash.Add(RestartCommand);
+            if (Actions != null)
+            {
+                foreach (var action in Actions)
+                {
+                    hash.Add(action);
+                }
+            }
+
+            return hash.ToHashCode();
+        }
     }
 }

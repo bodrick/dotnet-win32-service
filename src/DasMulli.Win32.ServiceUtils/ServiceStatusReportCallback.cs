@@ -21,5 +21,5 @@
     /// For example, you can repeatedly call this callback with <paramref name="state"/> set to <see cref="ServiceState.StartPending"/> or <see cref="ServiceState.StartPending"/>
     /// using different values to affect the start/stop progress indicator in service management UI dialogs.
     /// </param>
-    public delegate void ServiceStatusReportCallback(ServiceState state, ServiceAcceptedControlCommandsFlags acceptedControlCommands, int win32ExitCode, uint waitHint);
+    public delegate void ServiceStatusReportCallback(ServiceState state, ServiceAcceptedControlCommands acceptedControlCommands, int win32ExitCode, uint waitHint);
 }

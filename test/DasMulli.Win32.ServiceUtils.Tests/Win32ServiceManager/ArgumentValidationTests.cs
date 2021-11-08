@@ -15,9 +15,18 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         private readonly ServiceUtils.Win32ServiceManager _sut = new(TestMachineName, TestDatabaseName);
 
         [Fact]
+        public void ItShallNotThrowOnNullParameters()
+        {
+            Action when = () => new ServiceUtils.Win32ServiceManager(null, null);
+
+            when.Should().NotThrow();
+        }
+
+        [Fact]
         public void ItShallThrowOnCreateOrUpdateServiceWithNullBinaryPath()
         {
-            Action invocation = () => _sut.CreateOrUpdateService(CreateTestServiceDefinitionBuilder().WithBinaryPath(null).BuildNonValidating());
+            var invocation = () =>
+                _sut.CreateOrUpdateService(CreateTestServiceDefinitionBuilder().WithBinaryPath(null).BuildNonValidating());
 
             invocation.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("serviceDefinition");
         }
@@ -25,7 +34,8 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         [Fact]
         public void ItShallThrowOnCreateOrUpdateServiceWithNullServiceName()
         {
-            Action invocation = () => _sut.CreateOrUpdateService(CreateTestServiceDefinitionBuilder().WithServiceName(null).BuildNonValidating());
+            var invocation = () =>
+                _sut.CreateOrUpdateService(CreateTestServiceDefinitionBuilder().WithServiceName(null).BuildNonValidating());
 
             invocation.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("serviceDefinition");
         }
@@ -33,7 +43,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         [Fact]
         public void ItShallThrowOnCreateServiceWithNullBinaryPath()
         {
-            Action invocation = () => _sut.CreateService(CreateTestServiceDefinitionBuilder().WithBinaryPath(null).BuildNonValidating());
+            var invocation = () => _sut.CreateService(CreateTestServiceDefinitionBuilder().WithBinaryPath(null).BuildNonValidating());
 
             invocation.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("serviceDefinition");
         }
@@ -41,7 +51,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         [Fact]
         public void ItShallThrowOnCreateServiceWithNullServiceName()
         {
-            Action invocation = () => _sut.CreateService(CreateTestServiceDefinitionBuilder().WithServiceName(null).BuildNonValidating());
+            var invocation = () => _sut.CreateService(CreateTestServiceDefinitionBuilder().WithServiceName(null).BuildNonValidating());
 
             invocation.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("serviceDefinition");
         }
@@ -49,23 +59,15 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
         [Fact]
         public void ItShallThrowOnDeleteServiceWithEmptyServiceName()
         {
-            Action invocation = () => _sut.DeleteService(serviceName: string.Empty);
+            var invocation = () => _sut.DeleteService(string.Empty);
 
             invocation.Should().Throw<ArgumentException>().Which.ParamName.Should().Be("serviceName");
         }
 
         private static ServiceDefinitionBuilder CreateTestServiceDefinitionBuilder() => new ServiceDefinitionBuilder(TestServiceName)
-                           .WithDisplayName(TestDisplayName)
-                           .WithDescription(TestDescription)
-                           .WithBinaryPath(TestBinaryPath)
-                           .WithCredentials(Win32ServiceCredentials.LocalService);
-
-        [Fact]
-        private void ItShallNotThrowOnNullParameters()
-        {
-            Action when = () => new ServiceUtils.Win32ServiceManager(machineName: null, databaseName: null);
-
-            when.Should().NotThrow();
-        }
+            .WithDisplayName(TestDisplayName)
+            .WithDescription(TestDescription)
+            .WithBinaryPath(TestBinaryPath)
+            .WithCredentials(Win32ServiceCredentials.LocalService);
     }
 }

@@ -8,7 +8,7 @@ namespace DasMulli.Win32.ServiceUtils
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     internal class ServiceStatusHandle : SafeHandle
     {
-        internal ServiceStatusHandle() : base(IntPtr.Zero, ownsHandle: true)
+        internal ServiceStatusHandle() : base(IntPtr.Zero, true)
         {
         }
 

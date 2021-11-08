@@ -35,7 +35,7 @@ namespace DasMulli.Hosting.WindowsServices
         public string ServiceName { get; }
 
         /// <inheritdoc />
-        public void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback)
+        public void Start(string[]? startupArguments, ServiceStoppedCallback? serviceStoppedCallback)
         {
             _host
                 .Services
@@ -45,7 +45,7 @@ namespace DasMulli.Hosting.WindowsServices
                 {
                     if (!_stopRequestedByWindows)
                     {
-                        serviceStoppedCallback();
+                        serviceStoppedCallback?.Invoke();
                     }
                 });
 

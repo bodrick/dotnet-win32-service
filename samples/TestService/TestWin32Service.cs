@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DasMulli.Win32.ServiceUtils;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -9,36 +9,36 @@ namespace TestService
 {
     internal class TestWin32Service : IWin32Service
     {
-        private readonly string[] commandLineArguments;
-        private bool stopRequestedByWindows;
-        private IWebHost webHost;
+        private readonly string[] _commandLineArguments;
+        private bool _stopRequestedByWindows;
+        private IWebHost? _webHost;
 
-        public TestWin32Service(string[] commandLineArguments) => this.commandLineArguments = commandLineArguments;
+        public TestWin32Service(string[] commandLineArguments) => _commandLineArguments = commandLineArguments;
 
         public string ServiceName => "Test Service";
 
-        public void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback)
+        public void Start(string[]? startupArguments, ServiceStoppedCallback? serviceStoppedCallback)
         {
             // in addition to the arguments that the service has been registered with,
             // each service start may add additional startup parameters.
             // To test this: Open services console, open service details, enter startup arguments and press start.
             string[] combinedArguments;
-            if (startupArguments.Length > 0)
+            if (startupArguments is { Length: > 0 })
             {
-                combinedArguments = new string[commandLineArguments.Length + startupArguments.Length];
-                Array.Copy(commandLineArguments, combinedArguments, commandLineArguments.Length);
-                Array.Copy(startupArguments, 0, combinedArguments, commandLineArguments.Length, startupArguments.Length);
+                combinedArguments = new string[_commandLineArguments.Length + startupArguments.Length];
+                Array.Copy(_commandLineArguments, combinedArguments, _commandLineArguments.Length);
+                Array.Copy(startupArguments, 0, combinedArguments, _commandLineArguments.Length, startupArguments.Length);
             }
             else
             {
-                combinedArguments = commandLineArguments;
+                combinedArguments = _commandLineArguments;
             }
 
             var config = new ConfigurationBuilder()
                 .AddCommandLine(combinedArguments)
                 .Build();
 
-            webHost = new WebHostBuilder()
+            _webHost = new WebHostBuilder()
                 .UseKestrel()
                 .UseStartup<AspNetCoreStartup>()
                 .UseConfiguration(config)
@@ -46,25 +46,25 @@ namespace TestService
 
             // Make sure the Windows service is stopped if the
             // ASP.NET Core stack stops for any reason
-            webHost
+            _webHost
                 .Services
                 .GetRequiredService<IHostApplicationLifetime>()
                 .ApplicationStopped
                 .Register(() =>
                 {
-                    if (!stopRequestedByWindows)
+                    if (!_stopRequestedByWindows)
                     {
-                        serviceStoppedCallback();
+                        serviceStoppedCallback?.Invoke();
                     }
                 });
 
-            webHost.Start();
+            _webHost.Start();
         }
 
         public void Stop()
         {
-            stopRequestedByWindows = true;
-            webHost.Dispose();
+            _stopRequestedByWindows = true;
+            _webHost?.Dispose();
         }
     }
 }

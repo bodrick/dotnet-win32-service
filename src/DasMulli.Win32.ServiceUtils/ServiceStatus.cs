@@ -10,7 +10,7 @@ namespace DasMulli.Win32.ServiceUtils
     {
         private ServiceType serviceType;
         private ServiceState state;
-        private ServiceAcceptedControlCommandsFlags acceptedControlCommands;
+        private ServiceAcceptedControlCommands acceptedControlCommands;
         private int win32ExitCode;
         private uint serviceSpecificExitCode;
         private uint checkPoint;
@@ -28,7 +28,7 @@ namespace DasMulli.Win32.ServiceUtils
             set => state = value;
         }
 
-        public ServiceAcceptedControlCommandsFlags AcceptedControlCommands
+        public ServiceAcceptedControlCommands AcceptedControlCommands
         {
             get => acceptedControlCommands;
             set => acceptedControlCommands = value;
@@ -58,7 +58,7 @@ namespace DasMulli.Win32.ServiceUtils
             set => waitHint = value;
         }
 
-        public ServiceStatus(ServiceType serviceType, ServiceState state, ServiceAcceptedControlCommandsFlags acceptedControlCommands, int win32ExitCode, uint serviceSpecificExitCode, uint checkPoint, uint waitHint)
+        public ServiceStatus(ServiceType serviceType, ServiceState state, ServiceAcceptedControlCommands acceptedControlCommands, int win32ExitCode, uint serviceSpecificExitCode, uint checkPoint, uint waitHint)
         {
             this.serviceType = serviceType;
             this.state = state;

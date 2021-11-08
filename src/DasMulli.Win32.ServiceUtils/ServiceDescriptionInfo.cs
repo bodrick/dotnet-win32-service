@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace DasMulli.Win32.ServiceUtils
@@ -9,11 +9,11 @@ namespace DasMulli.Win32.ServiceUtils
     internal struct ServiceDescriptionInfo
     {
         [MarshalAs(UnmanagedType.LPWStr)]
-        private string serviceDescription;
+        private string? serviceDescription;
 
-        public ServiceDescriptionInfo(string serviceDescription) => this.serviceDescription = serviceDescription;
+        public ServiceDescriptionInfo(string? serviceDescription) => this.serviceDescription = serviceDescription;
 
-        public string ServiceDescription
+        public string? ServiceDescription
         {
             get => serviceDescription;
             set => serviceDescription = value;

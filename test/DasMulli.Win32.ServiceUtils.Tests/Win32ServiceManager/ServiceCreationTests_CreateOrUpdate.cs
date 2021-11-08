@@ -16,7 +16,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithDelayedAutoStart(true).Build(), startImmediately: false);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithDelayedAutoStart(true).Build(), false);
 
             // then
             _delayedAutoStartInfoSetOnNativeInterop.Should().Be(true);
@@ -30,7 +30,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: false);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), false);
 
             // Then
             _serviceDescriptions.Should().Contain(TestServiceName, TestServiceDescription);
@@ -45,7 +45,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenTheServiceCanBeStarted(service);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: true);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), true);
 
             // Then
             A.CallTo(() => service.Start(true)).MustHaveHappened();
@@ -59,7 +59,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithDescription(string.Empty).Build(), startImmediately: false);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithDescription(string.Empty).Build(), false);
 
             // Then
             _serviceDescriptions.Should().NotContainKey(TestServiceName);
@@ -74,7 +74,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithFailureActions(null).Build(), startImmediately: false);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithFailureActions(null).Build(), false);
 
             // Then
             _failureActions.Should().NotContainKey(TestServiceName);
@@ -89,7 +89,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             var handle = GivenServiceCreationIsPossible(ServiceStartType.StartOnDemand);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithAutoStart(false).WithDelayedAutoStart(true).Build(), startImmediately: false);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithAutoStart(false).WithDelayedAutoStart(true).Build(), false);
 
             // then
             _delayedAutoStartInfoSetOnNativeInterop.Should().Be(null);
@@ -104,7 +104,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             var handle = GivenServiceCreationIsPossible(ServiceStartType.AutoStart);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithDelayedAutoStart(false).Build(), startImmediately: false);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithDelayedAutoStart(false).Build(), false);
 
             // then
             _delayedAutoStartInfoSetOnNativeInterop.Should().Be(null);
@@ -120,7 +120,20 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenCreatingAServiceIsImpossible();
 
             // When
-            Action action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: false);
+            var action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), false);
+
+            // Then
+            action.Should().Throw<Win32Exception>();
+        }
+
+        [Fact]
+        public void ItThrowsIfServiceControlManagerCannotBeOpenedOnCreateOrUpdate()
+        {
+            // Given
+            GivenTheServiceControlManagerCannotBeOpened();
+
+            // When
+            var action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), false);
 
             // Then
             action.Should().Throw<Win32Exception>();
@@ -135,7 +148,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenTheServiceCannotBeStarted(service);
 
             // When
-            Action action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: true);
+            var action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), true);
 
             // Then
             action.Should().Throw<Win32Exception>();
@@ -148,7 +161,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             A.CallTo(_nativeInterop).Throws<DllNotFoundException>();
 
             // When
-            Action action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: false);
+            var action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), false);
 
             // Then
             action.Should().Throw<PlatformNotSupportedException>();
@@ -163,7 +176,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenOpeningServiceReturnsWin32Error(TestServiceName, unknownWin32ErrorCode);
 
             // When
-            Action action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: false);
+            var action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), false);
 
             // Then
             action.Should().Throw<Win32Exception>().Which.NativeErrorCode.Should().Be(unknownWin32ErrorCode);
@@ -179,7 +192,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
             GivenServiceCreationIsPossible(createdServiceStartType);
 
             // When
-            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithAutoStart(autoStartArgument).Build(), startImmediately: false);
+            WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinitionBuilder().WithAutoStart(autoStartArgument).Build(), false);
 
             // Then
             _createdServices.Should().Contain(TestServiceName);
@@ -189,24 +202,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
 
         private void GivenOpeningServiceReturnsWin32Error(string serviceName, int errorServiceDoesNotExist)
         {
-            ServiceHandle tmpHandle;
-            Win32Exception tmpWin32Exception;
+            ServiceHandle? tmpHandle;
+            Win32Exception? tmpWin32Exception;
             A.CallTo(() => _serviceControlManager.TryOpenService(serviceName, A<ServiceControlAccessRights>._, out tmpHandle, out tmpWin32Exception))
                 .Returns(value: false)
                 .AssignsOutAndRefParameters(CreateInvalidServiceHandle(), new Win32Exception(errorServiceDoesNotExist));
-        }
-
-        [Fact]
-        private void ItThrowsIfServiceControlManagerCannotBeOpenedOnCreateOrUpdate()
-        {
-            // Given
-            GivenTheServiceControlManagerCannotBeOpenend();
-
-            // When
-            Action action = () => WhenATestServiceIsCreatedOrUpdated(CreateTestServiceDefinition(), startImmediately: false);
-
-            // Then
-            action.Should().Throw<Win32Exception>();
         }
 
         private void WhenATestServiceIsCreatedOrUpdated(ServiceDefinition serviceDefinition, bool startImmediately) => _sut.CreateOrUpdateService(serviceDefinition, startImmediately);

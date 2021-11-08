@@ -26,8 +26,8 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         private readonly ServiceUtils.Win32ServiceHost _sut;
         private bool _doNotBlockAfterServiceMainFunction;
         private IntPtr _serviceControlContext;
-        private ServiceControlHandler _serviceControlHandler;
-        private ServiceStatusReportCallback _statusReportCallback;
+        private ServiceControlHandler? _serviceControlHandler;
+        private ServiceStatusReportCallback? _statusReportCallback;
 
         public ServiceLifecycleTests()
         {
@@ -67,7 +67,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             // Then
             A.CallTo(() => _serviceStateMachine.OnStart(A<string[]>.That.IsSameSequenceAs(TestServiceStartupArguments), A<ServiceStatusReportCallback>.Ignored))
                 .MustHaveHappened(Repeated.Exactly.Once);
-            _reportedServiceStatuses.Should().Contain(status => status.State == ServiceState.StartPending && status.AcceptedControlCommands == ServiceAcceptedControlCommandsFlags.None);
+            _reportedServiceStatuses.Should().Contain(status => status.State == ServiceState.StartPending && status.AcceptedControlCommands == ServiceAcceptedControlCommands.None);
         }
 
         [Fact]
@@ -75,10 +75,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         {
             // Given
             _doNotBlockAfterServiceMainFunction = true;
-            GivenTheServiceHasBeenStarted();
+            GivenTheServiceHasBeenStartedAsync();
 
             // When
-            WhenTheOsSendsControlCommand(ServiceControlCommand.Stop, commandSpecificEventType: 0);
+            WhenTheOsSendsControlCommand(ServiceControlCommand.Stop, 0);
 
             // Then
             A.CallTo(() => _serviceStateMachine.OnCommand(ServiceControlCommand.Stop, 0)).MustHaveHappened();
@@ -88,11 +88,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         public void ItIgnoresStateChangesAfterStopHasBeenReported()
         {
             // Given
-            var runTask = GivenTheServiceIsShuttingDown();
+            var runTask = GivenTheServiceIsShuttingDownAsync();
 
             // When
-            _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
-            _statusReportCallback(ServiceState.Running, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
+            _statusReportCallback?.Invoke(ServiceState.Stopped, ServiceAcceptedControlCommands.None, 123, 0);
+            _statusReportCallback?.Invoke(ServiceState.Running, ServiceAcceptedControlCommands.None, 123, 0);
             _backgroundRunCompletedEvent.WaitOne(10000);
 
             // Then
@@ -104,16 +104,16 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         public void ItResolvesRunAsyncTaskWhenServiceIsStopped()
         {
             // Given
-            var runTask = GivenTheServiceIsShuttingDown();
+            var runTask = GivenTheServiceIsShuttingDownAsync();
             runTask.IsCompleted.Should().BeFalse();
 
             // When the service implementation reports stopped via callback
-            _statusReportCallback(ServiceState.Stopped, ServiceAcceptedControlCommandsFlags.None, win32ExitCode: 123, waitHint: 0);
+            _statusReportCallback?.Invoke(ServiceState.Stopped, ServiceAcceptedControlCommands.None, 123, 0);
             _backgroundRunCompletedEvent.WaitOne(10000);
 
             // Then
             runTask.IsCompleted.Should().BeTrue();
-            runTask.Result.Should().Be(expected: 123);
+            runTask.Result.Should().Be(123);
         }
 
         [Fact]
@@ -127,11 +127,11 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             var returnValue = _sut.Run();
 
             // Then
-            returnValue.Should().Be(expected: -1);
-            _reportedServiceStatuses.Should().HaveCount(expected: 2);
-            _reportedServiceStatuses[index: 0].State.Should().Be(ServiceState.StartPending);
-            _reportedServiceStatuses[index: 1].State.Should().Be(ServiceState.Stopped);
-            _reportedServiceStatuses[index: 1].Win32ExitCode.Should().Be(expected: -1);
+            returnValue.Should().Be(-1);
+            _reportedServiceStatuses.Should().HaveCount(2);
+            _reportedServiceStatuses[0].State.Should().Be(ServiceState.StartPending);
+            _reportedServiceStatuses[1].State.Should().Be(ServiceState.Stopped);
+            _reportedServiceStatuses[1].Win32ExitCode.Should().Be(-1);
         }
 
         [Fact]
@@ -199,7 +199,7 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
         private void GivenStartingServiceControlDispatcherIsImpossible() => A.CallTo(() => _nativeInterop.StartServiceCtrlDispatcherW(A<ServiceTableEntry[]>._))
                 .Returns(value: false);
 
-        private Task<int> GivenTheServiceHasBeenStarted()
+        private Task<int> GivenTheServiceHasBeenStartedAsync()
         {
             GivenServiceControlManagerIsExpectingService();
             var task = RunInBackgroundAsync();
@@ -207,10 +207,10 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             return task;
         }
 
-        private Task<int> GivenTheServiceIsShuttingDown()
+        private Task<int> GivenTheServiceIsShuttingDownAsync()
         {
-            var task = GivenTheServiceHasBeenStarted();
-            WhenTheOsSendsControlCommand(ServiceControlCommand.Stop, commandSpecificEventType: 0);
+            var task = GivenTheServiceHasBeenStartedAsync();
+            WhenTheOsSendsControlCommand(ServiceControlCommand.Stop, 0);
             return task;
         }
 
@@ -266,6 +266,6 @@ namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceHost
             return runTask;
         }
 
-        private void WhenTheOsSendsControlCommand(ServiceControlCommand controlCommand, uint commandSpecificEventType) => _serviceControlHandler(controlCommand, commandSpecificEventType, IntPtr.Zero, _serviceControlContext);
+        private void WhenTheOsSendsControlCommand(ServiceControlCommand controlCommand, uint commandSpecificEventType) => _serviceControlHandler?.Invoke(controlCommand, commandSpecificEventType, IntPtr.Zero, _serviceControlContext);
     }
 }

@@ -17,7 +17,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// This includes the path to the executable as well as the
         /// arguments to be passed to it.
         /// </param>
-        public ServiceDefinition(string serviceName, string binPath)
+        public ServiceDefinition(string serviceName, string? binPath)
         {
             ServiceName = serviceName;
             DisplayName = serviceName;
@@ -39,7 +39,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// This includes the path to the executable as well as the
         /// arguments to be passed to it.
         /// </value>
-        public string BinaryPath { get; set; }
+        public string? BinaryPath { get; set; }
 
         /// <summary>
         /// Gets or sets the credentials for the account the service shall run as.
@@ -61,7 +61,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The service description.
         /// </value>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets or sets the display name of the service.
@@ -69,7 +69,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The display name of the service.
         /// </value>
-        public string DisplayName { get; set; }
+        public string? DisplayName { get; set; }
 
         /// <summary>
         /// Gets or sets the error severity of service failures.
@@ -85,7 +85,7 @@ namespace DasMulli.Win32.ServiceUtils
         /// <value>
         /// The failure actions of the service.
         /// </value>
-        public ServiceFailureActions FailureActions { get; set; }
+        public ServiceFailureActions? FailureActions { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the failure actions will be triggered

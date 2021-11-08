@@ -9,7 +9,7 @@ namespace DasMulli.Win32.ServiceUtils
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     internal class ServiceControlManager : SafeHandle
     {
-        internal ServiceControlManager() : base(IntPtr.Zero, ownsHandle: true)
+        internal ServiceControlManager() : base(IntPtr.Zero, true)
         {
         }
 
@@ -22,8 +22,13 @@ namespace DasMulli.Win32.ServiceUtils
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Exposed for testing via InternalsVisibleTo.")]
         internal INativeInterop NativeInterop { get; set; } = Win32Interop.Wrapper;
 
-        public ServiceHandle CreateService(string serviceName, string displayName, string binaryPath, ServiceType serviceType, ServiceStartType startupType, ErrorSeverity errorSeverity, Win32ServiceCredentials credentials)
+        public ServiceHandle CreateService(string serviceName, string? displayName, string? binaryPath, ServiceType serviceType, ServiceStartType startupType, ErrorSeverity errorSeverity, Win32ServiceCredentials credentials)
         {
+            if (serviceName == null)
+            {
+                throw new ArgumentNullException(nameof(serviceName));
+            }
+
             var service = NativeInterop.CreateServiceW(this, serviceName, displayName, ServiceControlAccessRights.All, serviceType, startupType, errorSeverity,
                 binaryPath, null,
                 IntPtr.Zero, null, credentials.UserName, credentials.Password);
@@ -48,7 +53,7 @@ namespace DasMulli.Win32.ServiceUtils
             return service;
         }
 
-        public virtual bool TryOpenService(string serviceName, ServiceControlAccessRights desiredControlAccess, out ServiceHandle serviceHandle, out Win32Exception errorException)
+        public virtual bool TryOpenService(string serviceName, ServiceControlAccessRights desiredControlAccess, [NotNullWhen(true)] out ServiceHandle? serviceHandle, [NotNullWhen(false)] out Win32Exception? errorException)
         {
             var service = NativeInterop.OpenServiceW(this, serviceName, desiredControlAccess);
 
@@ -66,7 +71,7 @@ namespace DasMulli.Win32.ServiceUtils
             return true;
         }
 
-        internal static ServiceControlManager Connect(INativeInterop nativeInterop, string machineName, string databaseName, ServiceControlManagerAccessRights desiredAccessRights)
+        internal static ServiceControlManager Connect(INativeInterop nativeInterop, string? machineName, string? databaseName, ServiceControlManagerAccessRights desiredAccessRights)
         {
             var mgr = nativeInterop.OpenSCManagerW(machineName, databaseName, desiredAccessRights);
 

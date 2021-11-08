@@ -8,14 +8,14 @@ namespace DasMulli.Win32.ServiceUtils
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     internal class ServiceHandle : SafeHandle
     {
-        internal ServiceHandle() : base(IntPtr.Zero, ownsHandle: true)
+        internal ServiceHandle() : base(IntPtr.Zero, true)
         {
         }
 
         public override bool IsInvalid => handle == IntPtr.Zero;
         internal INativeInterop NativeInterop { get; set; } = Win32Interop.Wrapper;
 
-        public virtual void ChangeConfig(string displayName, string binaryPath, ServiceType serviceType, ServiceStartType startupType, ErrorSeverity errorSeverity, Win32ServiceCredentials credentials)
+        public virtual void ChangeConfig(string? displayName, string? binaryPath, ServiceType serviceType, ServiceStartType startupType, ErrorSeverity errorSeverity, Win32ServiceCredentials credentials)
         {
             var success = NativeInterop.ChangeServiceConfigW(this, serviceType, startupType, errorSeverity, binaryPath, null, IntPtr.Zero, null, credentials.UserName, credentials.Password, displayName);
             if (!success)
@@ -42,13 +42,13 @@ namespace DasMulli.Win32.ServiceUtils
             }
         }
 
-        public virtual void SetDescription(string description)
+        public virtual void SetDescription(string? description)
         {
             var descriptionInfo = new ServiceDescriptionInfo(description);
             var lpDescriptionInfo = Marshal.AllocHGlobal(Marshal.SizeOf<ServiceDescriptionInfo>());
             try
             {
-                Marshal.StructureToPtr(descriptionInfo, lpDescriptionInfo, fDeleteOld: false);
+                Marshal.StructureToPtr(descriptionInfo, lpDescriptionInfo, false);
                 try
                 {
                     if (!NativeInterop.ChangeServiceConfig2W(this, ServiceConfigInfoTypeLevel.ServiceDescription, lpDescriptionInfo))
@@ -73,7 +73,7 @@ namespace DasMulli.Win32.ServiceUtils
             var lpFailureActionsFlag = Marshal.AllocHGlobal(Marshal.SizeOf<ServiceFailureActionsFlag>());
             try
             {
-                Marshal.StructureToPtr(failureActionsFlag, lpFailureActionsFlag, fDeleteOld: false);
+                Marshal.StructureToPtr(failureActionsFlag, lpFailureActionsFlag, false);
                 try
                 {
                     var result = NativeInterop.ChangeServiceConfig2W(this, ServiceConfigInfoTypeLevel.FailureActionsFlag, lpFailureActionsFlag);
@@ -93,13 +93,13 @@ namespace DasMulli.Win32.ServiceUtils
             }
         }
 
-        public virtual void SetFailureActions(ServiceFailureActions serviceFailureActions)
+        public virtual void SetFailureActions(ServiceFailureActions? serviceFailureActions)
         {
             var failureActions = serviceFailureActions == null ? ServiceFailureActionsInfo.Default : new ServiceFailureActionsInfo(serviceFailureActions.ResetPeriod, serviceFailureActions.RebootMessage, serviceFailureActions.RestartCommand, serviceFailureActions.Actions);
             var lpFailureActions = Marshal.AllocHGlobal(Marshal.SizeOf<ServiceFailureActionsInfo>());
             try
             {
-                Marshal.StructureToPtr(failureActions, lpFailureActions, fDeleteOld: false);
+                Marshal.StructureToPtr(failureActions, lpFailureActions, false);
                 try
                 {
                     if (!NativeInterop.ChangeServiceConfig2W(this, ServiceConfigInfoTypeLevel.FailureActions, lpFailureActions))
@@ -120,7 +120,7 @@ namespace DasMulli.Win32.ServiceUtils
 
         public virtual void Start(bool throwIfAlreadyRunning = true)
         {
-            if (!NativeInterop.StartServiceW(this, 0, IntPtr.Zero))
+            if (!NativeInterop.StartServiceW(this, 0, null))
             {
                 var win32Error = Marshal.GetLastWin32Error();
                 if (win32Error != KnownWin32ErrorCodes.ERROR_SERVICE_ALREADY_RUNNING || throwIfAlreadyRunning)
