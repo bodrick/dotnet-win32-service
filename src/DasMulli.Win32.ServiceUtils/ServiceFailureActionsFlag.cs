@@ -1,21 +1,21 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
-namespace DasMulli.Win32.ServiceUtils
+namespace DasMulli.Win32.ServiceUtils;
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct ServiceFailureActionsFlag : IServiceInfo
 {
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct ServiceFailureActionsFlag
+    private bool _fFailureActionsOnNonCrashFailures;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ServiceFailureActionsFlag"/> struct.
+    /// </summary>
+    /// <param name="enabled"></param>
+    public ServiceFailureActionsFlag(bool enabled) => _fFailureActionsOnNonCrashFailures = enabled;
+
+    public bool Flag
     {
-        private bool _fFailureActionsOnNonCrashFailures;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ServiceFailureActionsFlag"/> struct.
-        /// </summary>
-        public ServiceFailureActionsFlag(bool enabled) => _fFailureActionsOnNonCrashFailures = enabled;
-
-        public bool Flag
-        {
-            get => _fFailureActionsOnNonCrashFailures;
-            set => _fFailureActionsOnNonCrashFailures = value;
-        }
+        get => _fFailureActionsOnNonCrashFailures;
+        set => _fFailureActionsOnNonCrashFailures = value;
     }
 }

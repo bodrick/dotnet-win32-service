@@ -1,7 +1,40 @@
 <Project>
   <!-- These properties will be shared for all projects -->
+  <PropertyGroup Label="Build">
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <Features>strict</Features>
+    <!-- Warning CS1591 Missing XML comment for publicly visible type or member '<name>' -->
+    <!-- TODO: Well.. Write XML comments... -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
 
-  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <RepoRootPath>$(MSBuildThisFileDirectory)</RepoRootPath>
+    <BaseIntermediateOutputPath>$(RepoRootPath)obj\$([MSBuild]::MakeRelative($(RepoRootPath), $(MSBuildProjectDirectory)))\</BaseIntermediateOutputPath>
+    <BaseOutputPath Condition=" '$(BaseOutputPath)' == '' ">$(RepoRootPath)bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <PackageOutputPath>$(RepoRootPath)bin\Packages\$(Configuration)\</PackageOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Workaround">
+    <!--
+      Workaround for changing severity of rules with Location.None - e.g. CA1014
+        - see https://github.com/dotnet/roslyn/issues/37876#issuecomment-738042719
+      Needed until those types of rules can be disabled in a Global Analyzer Config
+        - when https://github.com/dotnet/roslyn/issues/48634 is implemented.
+      # CA1014: Mark assemblies with CLSCompliantAttribute
+    -->
+    <NoWarn>$(NoWarn);CA1014</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
     <Product>dotnet-win32-service</Product>
     <CurrentYear>$([System.DateTime]::Now.ToString(yyyy))</CurrentYear>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -11,26 +44,12 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <IncludeSymbols>false</IncludeSymbols>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <MinVerTagPrefix>v</MinVerTagPrefix>
-    <MinVerMinimumMajorMinor>5.0</MinVerMinimumMajorMinor>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <!--<AnalysisMode>AllEnabledByDefault</AnalysisMode>-->
-    <AnalysisLevel>latest</AnalysisLevel>
-    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
-    <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    <Features>strict</Features>
-    <!-- Warning CS1591 Missing XML comment for publicly visible type or member '<name>' -->
-    <!-- TODO: Well.. Write XML comments... -->
-    <NoWarn>$(NoWarn);1591</NoWarn>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols Condition=" '$(DebugType)' != 'embedded' ">true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- Local builds should embed PDBs so we never lose them when a subsequent build occurs. -->
+    <DebugType Condition=" '$(CI)' != 'true' and '$(TF_BUILD)' != 'true' ">embedded</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -39,30 +58,50 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
-  <Target Name="VersionTarget" AfterTargets="MinVer">
-    <PropertyGroup>
-      <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</FileVersion>
-    </PropertyGroup>
-  </Target>
-
-  <ItemGroup Condition="'$(Configuration)' == 'Release' and '$(SourceRoot)'==''">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <SourceLinkAzureDevOpsServerGitHost Include="lat-devops.tlt.psu.edu" />
-    <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" />
-    <PackageReference Include="Microsoft.SourceLink.AzureDevOpsServer.Git" Version="1.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.63">
+  <ItemGroup Label="Analyzers">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MinVer" Version="2.5.0">
+    <PackageReference Include="Meziantou.Analyzer" Version="1.0.679">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.64">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Analyzers" Version="3.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="3.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Formatting.Analyzers" Version="3.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="IDisposableAnalyzers" Version="4.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="AsyncFixer" Version="1.5.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.33.0.40503">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="ConfigureAwaitChecker.Analyzer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Label="Package References">
+    <PackageReference Include="MinVer" PrivateAssets="all" Version="2.5.0" />
   </ItemGroup>
 </Project>

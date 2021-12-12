@@ -1,132 +1,130 @@
-using System;
 using System.ComponentModel;
 using FakeItEasy;
 using FluentAssertions;
 using Xunit;
 
-namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager
+namespace DasMulli.Win32.ServiceUtils.Tests.Win32ServiceManager;
+
+public class ServiceDeletionTests
 {
-    public class ServiceDeletionTests
+    private const string TestDatabaseName = "TestDatabase";
+    private const string TestMachineName = "TestMachine";
+    private const string TestServiceName = "UnitTestService";
+
+    private readonly INativeInterop _nativeInterop = A.Fake<INativeInterop>();
+    private readonly ServiceControlManager _serviceControlManager;
+
+    private readonly ServiceUtils.Win32ServiceManager _sut;
+
+    public ServiceDeletionTests()
     {
-        private const string TestDatabaseName = "TestDatabase";
-        private const string TestMachineName = "TestMachine";
-        private const string TestServiceName = "UnitTestService";
+        _serviceControlManager = A.Fake<ServiceControlManager>(o => o.Wrapping(new ServiceControlManager { NativeInterop = _nativeInterop }));
 
-        private readonly INativeInterop _nativeInterop = A.Fake<INativeInterop>();
-        private readonly ServiceControlManager _serviceControlManager;
+        _sut = new ServiceUtils.Win32ServiceManager(TestMachineName, TestDatabaseName, _nativeInterop);
+    }
 
-        private readonly ServiceUtils.Win32ServiceManager _sut;
+    [Fact]
+    public void ItThrowsIfServiceCannotBeDeleted()
+    {
+        // Given
+        GivenTheServiceControlManagerCanBeOpened();
+        var service = GivenTheTestServiceExists();
+        GivenTheServiceCannotBeDeleted(service);
 
-        public ServiceDeletionTests()
-        {
-            _serviceControlManager = A.Fake<ServiceControlManager>(o => o.Wrapping(new ServiceControlManager { NativeInterop = _nativeInterop }));
+        // When
+        var action = () => _sut.DeleteService(TestServiceName);
 
-            _sut = new ServiceUtils.Win32ServiceManager(TestMachineName, TestDatabaseName, _nativeInterop);
-        }
+        // Then
+        action.Should().Throw<Win32Exception>();
+    }
 
-        [Fact]
-        public void ItThrowsIfServiceCannotBeDeleted()
-        {
-            // Given
-            GivenTheServiceControlManagerCanBeOpened();
-            var service = GivenTheTestServiceExists();
-            GivenTheServiceCannotBeDeleted(service);
+    [Fact]
+    public void ItThrowsIfServiceControlManagerCannotBeOpened()
+    {
+        // Given
+        GivenTheServiceControlManagerCannotBeOpened();
 
-            // When
-            var action = () => _sut.DeleteService(TestServiceName);
+        // When
+        var action = () => _sut.DeleteService(TestServiceName);
 
-            // Then
-            action.Should().Throw<Win32Exception>();
-        }
+        // Then
+        action.Should().Throw<Win32Exception>();
+    }
 
-        [Fact]
-        public void ItThrowsIfServiceControlManagerCannotBeOpened()
-        {
-            // Given
-            GivenTheServiceControlManagerCannotBeOpened();
+    [Fact]
+    public void ItThrowsIfServiceDoesNotExist()
+    {
+        // Given
+        GivenTheServiceControlManagerCanBeOpened();
+        GivenTheTestServiceDoesNotExist();
 
-            // When
-            var action = () => _sut.DeleteService(TestServiceName);
+        // When
+        var action = () => _sut.DeleteService(TestServiceName);
 
-            // Then
-            action.Should().Throw<Win32Exception>();
-        }
+        // Then
+        action.Should().Throw<Win32Exception>();
+    }
 
-        [Fact]
-        public void ItThrowsIfServiceDoesNotExist()
-        {
-            // Given
-            GivenTheServiceControlManagerCanBeOpened();
-            GivenTheTestServiceDoesNotExist();
+    [Fact]
+    public void ItThrowsPlatformNotSupportedWhenApiSetDllsAreMissing()
+    {
+        // Given
+        A.CallTo(_nativeInterop).Throws<DllNotFoundException>();
 
-            // When
-            var action = () => _sut.DeleteService(TestServiceName);
+        // When
+        var action = () => _sut.DeleteService(TestServiceName);
 
-            // Then
-            action.Should().Throw<Win32Exception>();
-        }
+        // Then
+        action.Should().Throw<PlatformNotSupportedException>();
+    }
 
-        [Fact]
-        public void ItThrowsPlatformNotSupportedWhenApiSetDllsAreMissing()
-        {
-            // Given
-            A.CallTo(_nativeInterop).Throws<DllNotFoundException>();
+    [Fact]
+    internal void ItCanDeleteAService()
+    {
+        // Given
+        GivenTheServiceControlManagerCanBeOpened();
+        var service = GivenTheTestServiceExists();
+        GivenTheServiceCanBeDeleted(service);
 
-            // When
-            var action = () => _sut.DeleteService(TestServiceName);
+        // When
+        _sut.DeleteService(TestServiceName);
 
-            // Then
-            action.Should().Throw<PlatformNotSupportedException>();
-        }
+        // Then
+        A.CallTo(() => service.Delete()).MustHaveHappened();
+    }
 
-        [Fact]
-        internal void ItCanDeleteAService()
-        {
-            // Given
-            GivenTheServiceControlManagerCanBeOpened();
-            var service = GivenTheTestServiceExists();
-            GivenTheServiceCanBeDeleted(service);
+    private void GivenTheServiceCanBeDeleted(ServiceHandle service) => A.CallTo(() => _nativeInterop.DeleteService(service)).Returns(true);
 
-            // When
-            _sut.DeleteService(TestServiceName);
+    private void GivenTheServiceCannotBeDeleted(ServiceHandle service) => A.CallTo(() => _nativeInterop.DeleteService(service)).Returns(false);
 
-            // Then
-            A.CallTo(() => service.Delete()).MustHaveHappened();
-        }
+    private void GivenTheServiceControlManagerCanBeOpened()
+    {
+        A.CallTo(() => _serviceControlManager.IsInvalid).Returns(false);
+        A.CallTo(() => _nativeInterop.OpenSCManager(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
+            .Returns(_serviceControlManager);
+    }
 
-        private void GivenTheServiceCanBeDeleted(ServiceHandle service) => A.CallTo(() => _nativeInterop.DeleteService(service)).Returns(value: true);
+    private void GivenTheServiceControlManagerCannotBeOpened()
+    {
+        A.CallTo(() => _serviceControlManager.IsInvalid).Returns(true);
+        A.CallTo(() => _nativeInterop.OpenSCManager(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
+            .Returns(_serviceControlManager);
+    }
 
-        private void GivenTheServiceCannotBeDeleted(ServiceHandle service) => A.CallTo(() => _nativeInterop.DeleteService(service)).Returns(value: false);
+    private void GivenTheTestServiceDoesNotExist()
+    {
+        var svc = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = _nativeInterop }));
+        A.CallTo(() => svc.IsInvalid).Returns(true);
+        A.CallTo(() => _nativeInterop.OpenService(_serviceControlManager, TestServiceName, A<ServiceControlAccessRights>._))
+            .Returns(svc);
+    }
 
-        private void GivenTheServiceControlManagerCanBeOpened()
-        {
-            A.CallTo(() => _serviceControlManager.IsInvalid).Returns(value: false);
-            A.CallTo(() => _nativeInterop.OpenSCManagerW(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
-                .Returns(_serviceControlManager);
-        }
-
-        private void GivenTheServiceControlManagerCannotBeOpened()
-        {
-            A.CallTo(() => _serviceControlManager.IsInvalid).Returns(value: true);
-            A.CallTo(() => _nativeInterop.OpenSCManagerW(TestMachineName, TestDatabaseName, A<ServiceControlManagerAccessRights>._))
-                .Returns(_serviceControlManager);
-        }
-
-        private void GivenTheTestServiceDoesNotExist()
-        {
-            var svc = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = _nativeInterop }));
-            A.CallTo(() => svc.IsInvalid).Returns(value: true);
-            A.CallTo(() => _nativeInterop.OpenServiceW(_serviceControlManager, TestServiceName, A<ServiceControlAccessRights>._))
-                .Returns(svc);
-        }
-
-        private ServiceHandle GivenTheTestServiceExists()
-        {
-            var svc = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = _nativeInterop }));
-            A.CallTo(() => svc.IsInvalid).Returns(value: false);
-            A.CallTo(() => _nativeInterop.OpenServiceW(_serviceControlManager, TestServiceName, A<ServiceControlAccessRights>._))
-                .Returns(svc);
-            return svc;
-        }
+    private ServiceHandle GivenTheTestServiceExists()
+    {
+        var svc = A.Fake<ServiceHandle>(o => o.Wrapping(new ServiceHandle { NativeInterop = _nativeInterop }));
+        A.CallTo(() => svc.IsInvalid).Returns(false);
+        A.CallTo(() => _nativeInterop.OpenService(_serviceControlManager, TestServiceName, A<ServiceControlAccessRights>._))
+            .Returns(svc);
+        return svc;
     }
 }

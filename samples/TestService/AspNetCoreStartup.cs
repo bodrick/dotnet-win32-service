@@ -1,13 +1,9 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
+namespace TestService;
 
-namespace TestService
+internal class AspNetCoreStartup
 {
-    internal class AspNetCoreStartup
+    public void Configure(IApplicationBuilder app) => app.Run(async (context) =>
     {
-        public void Configure(IApplicationBuilder app) => app.Run(async (context) =>
-                                                        {
-                                                            await context.Response.WriteAsync("Hello World!");
-                                                        });
-    }
+        await context.Response.WriteAsync("Hello World!");
+    });
 }

@@ -418,70 +418,105 @@ dotnet_naming_rule.parameters_rule.severity             = warning
 
 # Suppress Annoyances
 
-# RCS1181: Convert comment to documentation comment.
-dotnet_diagnostic.RCS1181.severity = none
+# CA1303: Do not pass literals as localized parameters
+dotnet_diagnostic.CA1303.severity = none
 
-# IDE0010: Add missing cases
-dotnet_diagnostic.IDE0010.severity = none
+# CA2007: Consider calling ConfigureAwait on the awaited task
+dotnet_diagnostic.CA2007.severity = none
 
-# IDE0072: Add missing cases
-dotnet_diagnostic.IDE0072.severity = none
+# CA1031: Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = none
 
-# CA1713: Events should not have 'Before' or 'After' prefix
-dotnet_diagnostic.CA1713.severity = none
+# CA1707: Identifiers should not contain underscores
+dotnet_diagnostic.CA1707.severity = none
 
-# CA1711: Identifiers should not have incorrect suffix
-dotnet_code_quality.ca1711.allowed_suffixes = EventHandler|EventArgs
-
-# CA1716: Identifiers should not match keywords
-dotnet_code_quality.CA1716.analyzed_symbol_kinds = Namespace, NamedType, Property, Event, Parameter
-
-# S2376: Write-only properties should not be used
-dotnet_diagnostic.S2376.severity = none
-
-# CA1716: Identifiers should not match keywords
-dotnet_diagnostic.CA1716.severity = none
+# RCS1090: Add call to 'ConfigureAwait' (or vice versa).
+dotnet_diagnostic.RCS1090.severity = none
 
 # IDE0058: computed value is never used.
 dotnet_diagnostic.IDE0058.severity = none
 
-# IDE0060: Remove unused parameter
-dotnet_code_quality_unused_parameters = non_public
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = none
 
-# RCS1175: Unused this parameter.
-dotnet_diagnostic.RCS1175.severity = none
+# VSTHRD111: Use ConfigureAwait(bool)
+dotnet_diagnostic.VSTHRD111.severity = none
 
-##########################################
-# License
-##########################################
-# The following applies as to the .editorconfig file ONLY, and is
-# included below for reference, per the requirements of the license
-# corresponding to this .editorconfig file.
-# See: https://github.com/RehanSaeed/EditorConfig
-#
-# MIT License
-#
-# Copyright (c) 2017-2019 Muhammad Rehan Saeed
-# Copyright (c) 2019 Henry Gabryjelski
-#
-# Permission is hereby granted, free of charge, to any
-# person obtaining a copy of this software and associated
-# documentation files (the "Software"), to deal in the
-# Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute,
-# sublicense, and/or sell copies of the Software, and to permit
-# persons to whom the Software is furnished to do so, subject
-# to the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-# OTHER DEALINGS IN THE SOFTWARE.
-##########################################
+# IDE0010: Add missing cases
+dotnet_diagnostic.IDE0010.severity = none
+
+# RCS1181: Convert comment to documentation comment.
+dotnet_diagnostic.RCS1181.severity = none
+
+# RCS1191: Declare enum value as combination of names.
+dotnet_diagnostic.RCS1191.severity = none
+
+# S2737: "catch" clauses should do more than rethrow
+dotnet_diagnostic.S2737.severity = none
+
+# ReSharper specific
+configure_await_analysis_mode = library
+
+# MA0048: File name must match type name
+dotnet_diagnostic.MA0048.severity = none
+
+# MA0003: Add argument name to improve readability
+dotnet_diagnostic.MA0003.severity = none
+
+# MA0007: Add a comma after the last value
+dotnet_diagnostic.MA0007.severity = none
+
+# CA1848: Use the LoggerMessage delegates
+dotnet_diagnostic.CA1848.severity = none
+
+# MA0051: Method is too long
+dotnet_diagnostic.MA0051.severity = silent
+
+# CA1062: Validate arguments of public methods
+dotnet_code_quality.CA1062.exclude_extension_method_this_parameter = true
+
+csharp_style_namespace_declarations = file_scoped:error
+dotnet_diagnostic.IDE0161.severity = error
+
+# S2259: Null pointers should not be dereferenced
+dotnet_diagnostic.S2259.severity = silent
+
+# MA0076: Do not use implicit culture-sensitive ToString in interpolated strings
+dotnet_diagnostic.MA0076.severity = none
+
+# IDISP007: Don't dispose injected.
+dotnet_diagnostic.IDISP007.severity = silent
+
+# RCS1138: Add summary to documentation comment.
+dotnet_diagnostic.RCS1138.severity = none
+
+# MA0011: IFormatProvider is missing
+dotnet_diagnostic.MA0011.severity = none
+
+# Disable duplicated rules - https://github.com/meziantou/Meziantou.Analyzer/blob/main/docs/comparison-with-other-analyzers.md
+dotnet_diagnostic.CA1000.severity = none
+dotnet_diagnostic.CA1036.severity = none
+dotnet_diagnostic.CA1050.severity = none
+dotnet_diagnostic.CA1058.severity = none
+dotnet_diagnostic.CA1065.severity = none
+dotnet_diagnostic.CA1067.severity = none
+dotnet_diagnostic.CA1304.severity = none
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1309.severity = none
+dotnet_diagnostic.CA1310.severity = none
+dotnet_diagnostic.CA1710.severity = none
+dotnet_diagnostic.CA1724.severity = none
+dotnet_diagnostic.CA1822.severity = none
+dotnet_diagnostic.CA1825.severity = none
+dotnet_diagnostic.CA1826.severity = none
+dotnet_diagnostic.CA1830.severity = none
+dotnet_diagnostic.CA1834.severity = none
+dotnet_diagnostic.CA2200.severity = none
+dotnet_diagnostic.CA2201.severity = none
+dotnet_diagnostic.CA2208.severity = none
+dotnet_diagnostic.CA2214.severity = none
+dotnet_diagnostic.CA2217.severity = none
+dotnet_diagnostic.CA2219.severity = none
+dotnet_diagnostic.CA2242.severity = none
+dotnet_diagnostic.CA5359.severity = none

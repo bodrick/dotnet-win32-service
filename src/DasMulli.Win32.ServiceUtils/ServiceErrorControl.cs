@@ -3,7 +3,7 @@ namespace DasMulli.Win32.ServiceUtils;
 /// <summary>
 /// Specifies the severity of the error if the service fails to start during boot.
 /// </summary>
-public enum ErrorSeverity : uint
+public enum ServiceErrorControl : uint
 {
     /// <summary>
     /// SC.exe help:

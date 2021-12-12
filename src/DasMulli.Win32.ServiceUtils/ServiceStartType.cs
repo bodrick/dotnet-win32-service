@@ -1,14 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
+namespace DasMulli.Win32.ServiceUtils;
 
-namespace DasMulli.Win32.ServiceUtils
+internal enum ServiceStartType : uint
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "External API")]
-    internal enum ServiceStartType : uint
-    {
-        StartOnBoot = 0,
-        StartOnSystemStart = 1,
-        AutoStart = 2,
-        StartOnDemand = 3,
-        Disabled = 4
-    }
+    StartOnBoot = 0,
+    StartOnSystemStart = 1,
+    AutoStart = 2,
+    StartOnDemand = 3,
+    Disabled = 4
 }

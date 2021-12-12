@@ -1,22 +1,17 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using DasMulli.Win32.ServiceUtils;
 
-namespace DasMulli.Win32.ServiceUtils
+[StructLayout(LayoutKind.Sequential)]
+internal struct ServiceDescriptionInfo : IServiceInfo
 {
-    [StructLayout(LayoutKind.Sequential)]
-    [SuppressMessage("ReSharper", "ConvertToAutoProperty", Justification = "Keep fields to preserve explicit struct layout for marshalling.")]
-    [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "External API")]
-    internal struct ServiceDescriptionInfo
+    [MarshalAs(UnmanagedType.LPWStr)]
+    private string? serviceDescription;
+
+    public ServiceDescriptionInfo(string? serviceDescription) => this.serviceDescription = serviceDescription;
+
+    public string? ServiceDescription
     {
-        [MarshalAs(UnmanagedType.LPWStr)]
-        private string? serviceDescription;
-
-        public ServiceDescriptionInfo(string? serviceDescription) => this.serviceDescription = serviceDescription;
-
-        public string? ServiceDescription
-        {
-            get => serviceDescription;
-            set => serviceDescription = value;
-        }
+        get => serviceDescription;
+        set => serviceDescription = value;
     }
 }

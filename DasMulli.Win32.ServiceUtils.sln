@@ -1,24 +1,38 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31729.503
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{016A8122-429B-45ED-A7A9-FE8DD75510C2}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
+		appveyor.yml = appveyor.yml
+		build.cmd = build.cmd
+		build.ps1 = build.ps1
+		ci-test.ps1 = ci-test.ps1
+		clean.bat = clean.bat
+		coverage.bat = coverage.bat
 		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+		global.json = global.json
+		LICENSE = LICENSE
 		NuGet.Config = NuGet.Config
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8F2E12E6-F921-4092-8BD1-0ABC4592AF60}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{8F2E12E6-F921-4092-8BD1-0ABC4592AF60}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{89B4BC15-059F-4810-8839-D5AB3C069D03}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{89B4BC15-059F-4810-8839-D5AB3C069D03}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestService", "samples\TestService\TestService.csproj", "{159FCA66-3F2B-4B54-96B2-3AB70FEA557B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{C5C8CC1D-0625-4FD7-9C23-8205288CED6C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C5C8CC1D-0625-4FD7-9C23-8205288CED6C}"
+	ProjectSection(SolutionItems) = preProject
+		test\.editorconfig = test\.editorconfig
+		test\Directory.Build.props = test\Directory.Build.props
+		test\Directory.Build.targets = test\Directory.Build.targets
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DasMulli.Win32.ServiceUtils", "src\DasMulli.Win32.ServiceUtils\DasMulli.Win32.ServiceUtils.csproj", "{EF3F265C-DD53-4BA8-866A-E894A8D99986}"
 EndProject
